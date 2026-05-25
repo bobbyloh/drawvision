@@ -99,16 +99,28 @@
       height: 100%;
     }
 
-    .axis {
+    .axis,
+    .view-pad {
       position: absolute;
-      right: 10px;
-      bottom: 72px;
       display: grid;
-      grid-template-columns: repeat(3, 34px);
       gap: 5px;
     }
 
+    .axis {
+      right: 10px;
+      bottom: 72px;
+      grid-template-columns: repeat(3, 34px);
+    }
+
+    .view-pad {
+      right: 10px;
+      top: 10px;
+      grid-template-columns: repeat(3, 42px);
+      z-index: 2;
+    }
+
     .axis button,
+    .view-pad button,
     .chip {
       min-height: 34px;
       border: 1px solid var(--line);
@@ -118,7 +130,8 @@
       font-weight: 700;
     }
 
-    .axis button.active {
+    .axis button.active,
+    .view-pad button.active {
       border-color: var(--accent);
       color: var(--accent);
     }
@@ -156,7 +169,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       border-top: 1px solid var(--line);
     }
 
@@ -323,6 +336,29 @@
       filter: drop-shadow(0 0 7px rgba(36,180,126,.9));
     }
 
+    .snap-marker {
+      fill: none;
+      stroke: var(--accent-2);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .snap-text {
+      fill: var(--accent-2);
+      font-size: 11px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .view-label {
+      fill: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-anchor: middle;
+      text-transform: uppercase;
+    }
+
     .credit {
       position: absolute;
       left: 10px;
@@ -356,6 +392,10 @@
       .drawer:not(.open) { display: grid; }
 
       .workspace { grid-column: 2; }
+
+      .view-pad {
+        grid-template-columns: repeat(2, 44px);
+      }
     }
   </style>
 </head>
@@ -373,8 +413,18 @@
       <svg viewBox="0 0 390 620" role="img" aria-label="CAD canvas">
         <line x1="195" y1="0" x2="195" y2="620" stroke="#5aa8ff" stroke-width="1" opacity=".35"></line>
         <line x1="0" y1="310" x2="390" y2="310" stroke="#e45d5d" stroke-width="1" opacity=".35"></line>
+        <text x="195" y="28" class="view-label" id="viewLabel">TOP</text>
         <g id="model"></g>
+        <g id="snapLayer"></g>
       </svg>
+      <div class="view-pad" id="viewPad" aria-label="View tools">
+        <button data-view="north">N</button>
+        <button data-view="top">Top</button>
+        <button data-view="south">S</button>
+        <button data-view="west">W</button>
+        <button data-view="pv">PV</button>
+        <button data-view="east">E</button>
+      </div>
       <div class="axis">
         <button data-axis="x">X</button>
         <button data-axis="y">Y</button>
@@ -398,7 +448,9 @@
       <nav class="tabs" aria-label="CAD categories">
         <button class="tab active" data-panel="think">Think</button>
         <button class="tab" data-panel="create">Create</button>
+        <button class="tab" data-panel="select">Select</button>
         <button class="tab" data-panel="edit">Edit</button>
+        <button class="tab" data-panel="view">View</button>
         <button class="tab" data-panel="layers">Layers</button>
         <button class="tab" data-panel="props">Props</button>
       </nav>
@@ -409,6 +461,11 @@
     const state = {
       activePanel: 'think',
       axisLock: null,
+      viewMode: 'top',
+      selectionMode: 'tap',
+      snapMode: 'grid',
+      gridSize: 24,
+      lastSnap: null,
       runningSnaps: ['endpoint', 'midpoint', 'center'],
       activeReference: 'from point',
       selected: ['wall_north'],
@@ -465,8 +522,32 @@
         ['Merge', 'join lines or loops'],
         ['Extrude', 'closed loop to volume'],
         ['Trim', 'cut against references'],
+        ['Grid Snap', 'snap grid'],
+        ['Free Snap', 'snap free'],
         ['Snap', 'endpoint midpoint center'],
         ['Reference', 'from point to point']
+      ],
+      select: [
+        ['Tap Select', 'select mode tap'],
+        ['Window', 'select mode window'],
+        ['Crossing', 'select mode crossing'],
+        ['Grid Snap', 'snap grid'],
+        ['Free Pick', 'snap free'],
+        ['Select All', 'select all'],
+        ['Clear', 'select none'],
+        ['Invert', 'select invert'],
+        ['Walls', 'select layer walls'],
+        ['Floor', 'select layer floor'],
+        ['Guides', 'select layer guides'],
+        ['Lines', 'select type line']
+      ],
+      view: [
+        ['North', 'view north'],
+        ['South', 'view south'],
+        ['East', 'view east'],
+        ['West', 'view west'],
+        ['PV', 'view pv'],
+        ['Top', 'view top']
       ]
     };
 
@@ -476,6 +557,8 @@
     const drawerTitle = document.getElementById('drawerTitle');
     const status = document.getElementById('status');
     const hud = document.getElementById('hud');
+    const viewLabel = document.getElementById('viewLabel');
+    const snapLayer = document.getElementById('snapLayer');
 
     function layerById(id) {
       return state.layers.find(layer => layer.id === id);
@@ -483,6 +566,7 @@
 
     function renderModel() {
       model.innerHTML = '';
+      model.setAttribute('transform', viewTransform());
       state.objects.forEach(object => {
         const layer = layerById(object.layer);
         if (!layer || !layer.visible) return;
@@ -531,6 +615,27 @@
         });
         model.appendChild(node);
       });
+      renderSnapMarker();
+    }
+
+    function renderSnapMarker() {
+      snapLayer.innerHTML = '';
+      if (!state.lastSnap) return;
+      const { x, y } = state.lastSnap;
+      snapLayer.innerHTML = `
+        <path class="snap-marker" d="M ${x - 8} ${y} L ${x + 8} ${y} M ${x} ${y - 8} L ${x} ${y + 8}"></path>
+        <circle class="snap-marker" cx="${x}" cy="${y}" r="10"></circle>
+        <text class="snap-text" x="${x + 12}" y="${y - 12}">${x},${y}</text>
+      `;
+    }
+
+    function viewTransform() {
+      if (state.viewMode === 'north') return 'translate(0 18) scale(1 .82)';
+      if (state.viewMode === 'south') return 'rotate(180 195 310) translate(0 18) scale(1 .82)';
+      if (state.viewMode === 'east') return 'rotate(90 195 310) translate(0 18) scale(1 .82)';
+      if (state.viewMode === 'west') return 'rotate(-90 195 310) translate(0 18) scale(1 .82)';
+      if (state.viewMode === 'pv') return 'translate(32 -18) skewX(-12) scale(.88 .76)';
+      return '';
     }
 
     function renderHud() {
@@ -539,11 +644,14 @@
       hud.innerHTML = [
         selectedText,
         axisText,
+        `Snap ${state.snapMode}`,
         `Snap ${state.runningSnaps.join('/')}`,
+        `Select ${state.selectionMode}`,
         state.activeReference,
-        'View iso'
+        `View ${state.viewMode.toUpperCase()}`
       ].map(text => `<span class="chip">${text}</span>`).join('');
       status.textContent = `${state.objects.length} objects - ${selectedText}`;
+      viewLabel.textContent = state.viewMode === 'pv' ? 'PERSPECTIVE' : state.viewMode.toUpperCase();
     }
 
     function commandButton(label, hint) {
@@ -612,11 +720,46 @@
       drawerBody.innerHTML = `<div class="grid">${panels[state.activePanel].map(item => commandButton(item[0], item[1])).join('')}</div>`;
     }
 
+    function selectBy(predicate) {
+      state.selected = state.objects.filter(predicate).map(object => object.id);
+    }
+
+    function setView(mode) {
+      state.viewMode = mode;
+    }
+
     function runCommand(command) {
       const text = command.trim().toLowerCase();
       if (!text) return;
+      if (text.includes('select all')) {
+        state.selected = state.objects.map(object => object.id);
+      }
+      if (text.includes('select none') || text.includes('clear selection')) {
+        state.selected = [];
+      }
+      if (text.includes('select invert')) {
+        state.selected = state.objects.filter(object => !state.selected.includes(object.id)).map(object => object.id);
+      }
       if (text.includes('select layer walls')) {
-        state.selected = state.objects.filter(object => object.layer === 'walls').map(object => object.id);
+        selectBy(object => object.layer === 'walls');
+      }
+      if (text.includes('select layer floor')) {
+        selectBy(object => object.layer === 'floor');
+      }
+      if (text.includes('select layer guides')) {
+        selectBy(object => object.layer === 'guides');
+      }
+      if (text.includes('select type line')) {
+        selectBy(object => object.type === 'line');
+      }
+      if (text.includes('select mode tap')) {
+        state.selectionMode = 'tap';
+      }
+      if (text.includes('select mode window')) {
+        state.selectionMode = 'window';
+      }
+      if (text.includes('select mode crossing')) {
+        state.selectionMode = 'crossing';
       }
       if (text.includes('set color red')) {
         state.objects.forEach(object => {
@@ -640,13 +783,38 @@
       if (text.includes('snap midpoint')) {
         state.runningSnaps = ['midpoint'];
       }
+      if (text.includes('snap grid')) {
+        state.snapMode = 'grid';
+      }
+      if (text.includes('snap free') || text.includes('free pick')) {
+        state.snapMode = 'free';
+      }
       if (text.includes('from endpoint')) {
         state.activeReference = 'from endpoint';
       }
       if (text.includes('to midpoint')) {
         state.activeReference = `${state.activeReference} to midpoint`;
       }
+      ['north', 'south', 'east', 'west', 'pv', 'top'].forEach(mode => {
+        if (text.includes(`view ${mode}`)) setView(mode);
+      });
       renderAll();
+    }
+
+    function svgPointFromEvent(event) {
+      const svg = event.currentTarget.querySelector('svg');
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function snapPoint(point) {
+      if (state.snapMode !== 'grid') return { x: Math.round(point.x), y: Math.round(point.y) };
+      return {
+        x: Math.round(point.x / state.gridSize) * state.gridSize,
+        y: Math.round(point.y / state.gridSize) * state.gridSize
+      };
     }
 
     function renderAll() {
@@ -655,6 +823,9 @@
       renderDrawer();
       document.querySelectorAll('.axis button').forEach(button => {
         button.classList.toggle('active', state.axisLock === button.dataset.axis);
+      });
+      document.querySelectorAll('.view-pad button').forEach(button => {
+        button.classList.toggle('active', state.viewMode === button.dataset.view);
       });
       document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.toggle('active', state.activePanel === tab.dataset.panel);
@@ -700,6 +871,21 @@
       const axis = event.target.dataset.axis;
       if (!axis) return;
       state.axisLock = state.axisLock === axis ? null : axis;
+      renderAll();
+    });
+
+    document.getElementById('viewPad').addEventListener('click', event => {
+      const view = event.target.dataset.view;
+      if (!view) return;
+      setView(view);
+      renderAll();
+    });
+
+    document.getElementById('workspace').addEventListener('pointerdown', event => {
+      if (event.target.closest('button')) return;
+      const point = snapPoint(svgPointFromEvent(event));
+      state.lastSnap = point;
+      document.getElementById('commandInput').value = `point ${point.x},${point.y},0 snap ${state.snapMode}`;
       renderAll();
     });
 

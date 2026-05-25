@@ -1,4 +1,4 @@
-const CACHE_NAME = 'drawvision-prototype-v1';
+const CACHE_NAME = 'drawvision-prototype-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', event => {
