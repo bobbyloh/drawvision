@@ -49,7 +49,7 @@
 
     .topbar {
       display: grid;
-      grid-template-columns: 40px 1fr 40px;
+      grid-template-columns: 72px 1fr 40px;
       align-items: center;
       gap: 8px;
       padding: 8px 10px;
@@ -65,6 +65,12 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel);
+    }
+
+    .menu-btn {
+      width: 72px;
+      padding: 0 10px;
+      font-weight: 800;
     }
 
     .title {
@@ -223,6 +229,58 @@
       padding: 12px;
     }
 
+    .tool-popup,
+    .file-popup {
+      position: absolute;
+      inset: 72px 10px auto 10px;
+      max-height: min(68svh, 520px);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(17, 20, 22, .98);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .42);
+      z-index: 8;
+      overflow: hidden;
+      display: none;
+    }
+
+    .tool-popup.open,
+    .file-popup.open {
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .popup-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #15191d;
+    }
+
+    .popup-head h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .popup-body {
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .popup-section {
+      margin-bottom: 14px;
+    }
+
+    .popup-section h3 {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -350,6 +408,37 @@
       pointer-events: none;
     }
 
+    .grid-major {
+      stroke: rgba(255, 255, 255, .22);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+
+    .grid-minor {
+      stroke: rgba(255, 255, 255, .08);
+      stroke-width: .75;
+      pointer-events: none;
+    }
+
+    .grid-axis-x {
+      stroke: rgba(228, 93, 93, .78);
+      stroke-width: 1.5;
+      pointer-events: none;
+    }
+
+    .grid-axis-y {
+      stroke: rgba(90, 168, 255, .78);
+      stroke-width: 1.5;
+      pointer-events: none;
+    }
+
+    .grid-label {
+      fill: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
     .view-label {
       fill: var(--muted);
       font-size: 11px;
@@ -396,13 +485,24 @@
       .view-pad {
         grid-template-columns: repeat(2, 44px);
       }
+
+      .tool-popup {
+        left: 300px;
+        right: 340px;
+      }
+
+      .file-popup {
+        left: 10px;
+        right: auto;
+        width: 280px;
+      }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <button class="icon-btn" id="menuBtn" aria-label="Open tools">☰</button>
+      <button class="icon-btn menu-btn" id="fileBtn" aria-label="Open file menu">File</button>
       <div class="title">DrawVision <span class="subtitle" id="status">Remembering DrawVision by Bob Loh</span></div>
       <button class="icon-btn" id="saveBtn" aria-label="Save model">⌁</button>
     </header>
@@ -410,9 +510,16 @@
     <section class="workspace" id="workspace" aria-label="Model viewport">
       <div class="hud" id="hud"></div>
       <div class="credit">Disclaimer by WQai: remembering DrawVision by Bob Loh.</div>
+      <div class="file-popup" id="filePopup" aria-label="File menu">
+        <div class="popup-head">
+          <h2>File</h2>
+          <button class="icon-btn" id="closeFilePopup" aria-label="Close file menu">×</button>
+        </div>
+        <div class="popup-body" id="filePopupBody"></div>
+      </div>
+      <input id="openFileInput" type="file" accept="application/json,.json" hidden>
       <svg viewBox="0 0 390 620" role="img" aria-label="CAD canvas">
-        <line x1="195" y1="0" x2="195" y2="620" stroke="#5aa8ff" stroke-width="1" opacity=".35"></line>
-        <line x1="0" y1="310" x2="390" y2="310" stroke="#e45d5d" stroke-width="1" opacity=".35"></line>
+        <g id="workingGrid"></g>
         <text x="195" y="28" class="view-label" id="viewLabel">TOP</text>
         <g id="model"></g>
         <g id="snapLayer"></g>
@@ -424,6 +531,13 @@
         <button data-view="west">W</button>
         <button data-view="pv">PV</button>
         <button data-view="east">E</button>
+      </div>
+      <div class="tool-popup" id="creationPopup" aria-label="Creation tools popup">
+        <div class="popup-head">
+          <h2>Create Geometry</h2>
+          <button class="icon-btn" id="closeCreationPopup" aria-label="Close creation tools">×</button>
+        </div>
+        <div class="popup-body" id="creationPopupBody"></div>
       </div>
       <div class="axis">
         <button data-axis="x">X</button>
@@ -464,7 +578,9 @@
       viewMode: 'top',
       selectionMode: 'tap',
       snapMode: 'grid',
-      gridSize: 24,
+      gridSize: 16,
+      gridFeet: 20,
+      gridOrigin: { x: 35, y: 92 },
       lastSnap: null,
       runningSnaps: ['endpoint', 'midpoint', 'center'],
       activeReference: 'from point',
@@ -504,14 +620,69 @@
       ]
     };
 
+    const creationTools = [
+      {
+        section: '2D Drafting',
+        tools: [
+          ['Point', 'point x,y,0 snap grid'],
+          ['Line', 'line from point to point'],
+          ['Polyline', 'polyline points close optional'],
+          ['Rectangle', 'rect from corner to corner'],
+          ['Circle 24', 'circle center radius nodes 24'],
+          ['Arc', 'arc start mid end'],
+          ['Text', 'text at point value']
+        ]
+      },
+      {
+        section: 'Faces and Profiles',
+        tools: [
+          ['Face', 'face from closed loop'],
+          ['Profile', 'profile from selected edges'],
+          ['Offset', 'offset selected distance'],
+          ['Shell', 'shell selected thickness'],
+          ['Fill Loop', 'find loops | fill selected']
+        ]
+      },
+      {
+        section: '3D Creation',
+        tools: [
+          ['Extrude', 'extrude selected z height'],
+          ['Revolve', 'revolve selected around z 360 segments 24'],
+          ['Loft', 'loft selected profiles'],
+          ['Boolean Add', 'boolean add selected'],
+          ['Boolean Cut', 'boolean subtract selected'],
+          ['Section', 'section selected plane xy']
+        ]
+      },
+      {
+        section: 'Reusable Objects',
+        tools: [
+          ['Group', 'group selected as name'],
+          ['Component', 'component selected as name'],
+          ['Block', 'block selected as name'],
+          ['Array', 'array selected rows cols spacing']
+        ]
+      }
+    ];
+
+    const fileTools = [
+      ['New', 'file new', 'start a clean model'],
+      ['Open', 'file open', 'load a DrawVision JSON file'],
+      ['Save', 'file save', 'save current model locally'],
+      ['Save As', 'file save as', 'save locally with a project name'],
+      ['Export JSON', 'file export json', 'download model JSON'],
+      ['Import JSON', 'file import json', 'merge/load model JSON'],
+      ['Clear Local Save', 'file clear local', 'remove browser local save']
+    ];
+
     const panels = {
       create: [
+        ['Open Popup', 'create popup'],
+        ['Point', 'point x,y,0 snap grid'],
         ['Line', 'line from point to point'],
-        ['Polyline', 'connected lines and loops'],
-        ['Circle 24', 'editable 24-node circle'],
-        ['Text', 'label with font attributes'],
-        ['Face', 'fill a closed loop'],
-        ['Revolve', 'spin profile around axis']
+        ['Rectangle', 'rect from corner to corner'],
+        ['Circle 24', 'circle center radius nodes 24'],
+        ['Extrude', 'extrude selected z height']
       ],
       edit: [
         ['Select', 'tap, window, by property'],
@@ -559,12 +730,19 @@
     const hud = document.getElementById('hud');
     const viewLabel = document.getElementById('viewLabel');
     const snapLayer = document.getElementById('snapLayer');
+    const workingGrid = document.getElementById('workingGrid');
+    const creationPopup = document.getElementById('creationPopup');
+    const creationPopupBody = document.getElementById('creationPopupBody');
+    const filePopup = document.getElementById('filePopup');
+    const filePopupBody = document.getElementById('filePopupBody');
+    const openFileInput = document.getElementById('openFileInput');
 
     function layerById(id) {
       return state.layers.find(layer => layer.id === id);
     }
 
     function renderModel() {
+      renderWorkingGrid();
       model.innerHTML = '';
       model.setAttribute('transform', viewTransform());
       state.objects.forEach(object => {
@@ -618,14 +796,36 @@
       renderSnapMarker();
     }
 
+    function renderWorkingGrid() {
+      const { x, y } = state.gridOrigin;
+      const size = state.gridSize;
+      const feet = state.gridFeet;
+      const edge = feet * size;
+      const lines = [];
+      for (let index = 0; index <= feet; index += 1) {
+        const pos = index * size;
+        const lineClass = index % 5 === 0 ? 'grid-major' : 'grid-minor';
+        lines.push(`<line class="${lineClass}" x1="${x + pos}" y1="${y}" x2="${x + pos}" y2="${y + edge}"></line>`);
+        lines.push(`<line class="${lineClass}" x1="${x}" y1="${y + pos}" x2="${x + edge}" y2="${y + pos}"></line>`);
+        if (index % 5 === 0 || index === feet) {
+          lines.push(`<text class="grid-label" x="${x + pos - 5}" y="${y + edge + 16}">${index}'</text>`);
+          lines.push(`<text class="grid-label" x="${x - 24}" y="${y + edge - pos + 3}">${index}'</text>`);
+        }
+      }
+      lines.push(`<line class="grid-axis-x" x1="${x}" y1="${y + edge}" x2="${x + edge}" y2="${y + edge}"></line>`);
+      lines.push(`<line class="grid-axis-y" x1="${x}" y1="${y}" x2="${x}" y2="${y + edge}"></line>`);
+      lines.push(`<text class="grid-label" x="${x}" y="${y - 12}">20' x 20' working grid - 1' snap</text>`);
+      workingGrid.innerHTML = lines.join('');
+    }
+
     function renderSnapMarker() {
       snapLayer.innerHTML = '';
       if (!state.lastSnap) return;
-      const { x, y } = state.lastSnap;
+      const { x, y, fx, fy } = state.lastSnap;
       snapLayer.innerHTML = `
         <path class="snap-marker" d="M ${x - 8} ${y} L ${x + 8} ${y} M ${x} ${y - 8} L ${x} ${y + 8}"></path>
         <circle class="snap-marker" cx="${x}" cy="${y}" r="10"></circle>
-        <text class="snap-text" x="${x + 12}" y="${y - 12}">${x},${y}</text>
+        <text class="snap-text" x="${x + 12}" y="${y - 12}">${fx}',${fy}'</text>
       `;
     }
 
@@ -644,6 +844,7 @@
       hud.innerHTML = [
         selectedText,
         axisText,
+        `Grid ${state.gridFeet}'x${state.gridFeet}' @ 1'`,
         `Snap ${state.snapMode}`,
         `Snap ${state.runningSnaps.join('/')}`,
         `Select ${state.selectionMode}`,
@@ -657,6 +858,111 @@
     function commandButton(label, hint) {
       return `<button class="tool" data-command="${hint}">${label}<span>${hint}</span></button>`;
     }
+
+    function renderCreationPopup() {
+      creationPopupBody.innerHTML = creationTools.map(section => `
+        <section class="popup-section">
+          <h3>${section.section}</h3>
+          <div class="grid">
+            ${section.tools.map(item => commandButton(item[0], item[1])).join('')}
+          </div>
+        </section>
+      `).join('');
+    }
+
+    function renderFilePopup() {
+      filePopupBody.innerHTML = `<div class="grid">${fileTools.map(item => `
+        <button class="tool" data-file-command="${item[1]}">${item[0]}<span>${item[2]}</span></button>
+      `).join('')}</div>`;
+    }
+
+    function openCreationPopup() {
+      renderCreationPopup();
+      closeFilePopup();
+      creationPopup.classList.add('open');
+    }
+
+    function closeCreationPopup() {
+      creationPopup.classList.remove('open');
+    }
+
+    function openFilePopup() {
+      renderFilePopup();
+      closeCreationPopup();
+      filePopup.classList.add('open');
+    }
+
+    function closeFilePopup() {
+      filePopup.classList.remove('open');
+    }
+
+    function modelPayload(name = 'DrawVision model') {
+      return {
+        name,
+        savedAt: new Date().toISOString(),
+        version: 1,
+        viewMode: state.viewMode,
+        layers: state.layers,
+        groups: state.groups,
+        objects: state.objects
+      };
+    }
+
+    function saveModel(name = 'DrawVision model') {
+      localStorage.setItem('drawvision-model', JSON.stringify(modelPayload(name)));
+      status.textContent = `Saved ${name}`;
+    }
+
+    function loadModelPayload(payload) {
+      if (!payload || !Array.isArray(payload.objects)) return;
+      state.layers = Array.isArray(payload.layers) ? payload.layers : state.layers;
+      state.groups = Array.isArray(payload.groups) ? payload.groups : state.groups;
+      state.objects = payload.objects;
+      state.selected = [];
+      state.lastSnap = null;
+      if (payload.viewMode) state.viewMode = payload.viewMode;
+      status.textContent = `Opened ${payload.name || 'model'}`;
+      renderAll();
+    }
+
+    function downloadModel(name = 'drawvision-model') {
+      const blob = new Blob([JSON.stringify(modelPayload(name), null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function runFileCommand(command) {
+      if (command === 'file new') {
+        state.objects = [];
+        state.groups = [];
+        state.selected = [];
+        state.lastSnap = null;
+        status.textContent = 'New blank model';
+        renderAll();
+      }
+      if (command === 'file open' || command === 'file import json') {
+        openFileInput.click();
+      }
+      if (command === 'file save') {
+        saveModel();
+      }
+      if (command === 'file save as') {
+        const name = prompt('Save as project name', 'DrawVision model') || 'DrawVision model';
+        saveModel(name);
+      }
+      if (command === 'file export json') {
+        downloadModel('drawvision-model');
+      }
+      if (command === 'file clear local') {
+        localStorage.removeItem('drawvision-model');
+        status.textContent = 'Local save cleared';
+      }
+      closeFilePopup();
+    }
+
 
     function renderDrawer() {
       drawerTitle.textContent = state.activePanel[0].toUpperCase() + state.activePanel.slice(1);
@@ -731,6 +1037,9 @@
     function runCommand(command) {
       const text = command.trim().toLowerCase();
       if (!text) return;
+      if (text.includes('create popup')) {
+        openCreationPopup();
+      }
       if (text.includes('select all')) {
         state.selected = state.objects.map(object => object.id);
       }
@@ -810,10 +1119,18 @@
     }
 
     function snapPoint(point) {
-      if (state.snapMode !== 'grid') return { x: Math.round(point.x), y: Math.round(point.y) };
+      const { x, y } = state.gridOrigin;
+      const max = state.gridFeet;
+      if (state.snapMode !== 'grid') {
+        return { x: Math.round(point.x), y: Math.round(point.y), fx: '?', fy: '?' };
+      }
+      const fx = Math.max(0, Math.min(max, Math.round((point.x - x) / state.gridSize)));
+      const fy = Math.max(0, Math.min(max, Math.round((y + max * state.gridSize - point.y) / state.gridSize)));
       return {
-        x: Math.round(point.x / state.gridSize) * state.gridSize,
-        y: Math.round(point.y / state.gridSize) * state.gridSize
+        x: x + fx * state.gridSize,
+        y: y + (max - fy) * state.gridSize,
+        fx,
+        fy
       };
     }
 
@@ -837,6 +1154,7 @@
       if (!tab) return;
       state.activePanel = tab.dataset.panel;
       drawer.classList.add('open');
+      if (state.activePanel === 'create') openCreationPopup();
       renderAll();
     });
 
@@ -847,6 +1165,7 @@
       const describe = event.target.closest('[data-describe]');
       if (command) {
         document.getElementById('commandInput').value = command;
+        if (command === 'create popup') openCreationPopup();
       }
       if (recipeName) {
         const recipe = state.recipes.find(item => item.name === recipeName);
@@ -881,11 +1200,20 @@
       renderAll();
     });
 
+    creationPopupBody.addEventListener('click', event => {
+      const command = event.target.closest('[data-command]')?.dataset.command;
+      if (!command) return;
+      document.getElementById('commandInput').value = command;
+      closeCreationPopup();
+    });
+
+    document.getElementById('closeCreationPopup').addEventListener('click', closeCreationPopup);
+
     document.getElementById('workspace').addEventListener('pointerdown', event => {
       if (event.target.closest('button')) return;
       const point = snapPoint(svgPointFromEvent(event));
       state.lastSnap = point;
-      document.getElementById('commandInput').value = `point ${point.x},${point.y},0 snap ${state.snapMode}`;
+      document.getElementById('commandInput').value = `point ${point.fx}',${point.fy}',0 snap ${state.snapMode}`;
       renderAll();
     });
 
@@ -894,11 +1222,33 @@
       runCommand(document.getElementById('commandInput').value);
     });
 
-    document.getElementById('menuBtn').addEventListener('click', () => drawer.classList.toggle('open'));
+    document.getElementById('fileBtn').addEventListener('click', openFilePopup);
     document.getElementById('closeDrawer').addEventListener('click', () => drawer.classList.remove('open'));
     document.getElementById('saveBtn').addEventListener('click', () => {
-      localStorage.setItem('drawvision-model', JSON.stringify(state));
-      status.textContent = 'Saved locally';
+      saveModel();
+    });
+
+    filePopupBody.addEventListener('click', event => {
+      const command = event.target.closest('[data-file-command]')?.dataset.fileCommand;
+      if (!command) return;
+      runFileCommand(command);
+    });
+
+    document.getElementById('closeFilePopup').addEventListener('click', closeFilePopup);
+
+    openFileInput.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          loadModelPayload(JSON.parse(reader.result));
+        } catch (error) {
+          status.textContent = 'Open failed: invalid JSON';
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
     });
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
