@@ -99,7 +99,8 @@
         "default_width": "number_mm",
         "default_depth": "number_mm",
         "default_height": "number_mm",
-        "material": "string"
+        "material": "string",
+        "auto_services": "boolean"
       }
     }
   }

@@ -55,3 +55,10 @@
 - Added linear cabinet sequence generation
 - Added room containment for generated cabinets
 - Added service rule inheritance for generated kitchen cabinets
+
+## Kitchen Service Orchestration
+
+- Added automatic kitchen service provisioning
+- Added automatic service.create for required cabinet services
+- Added automatic service.connect for generated services
+- Updated kitchen.generate to validate generated kitchen service dependencies

@@ -39,5 +39,6 @@ test('kitchen.generate creates cabinet sequence inside room', () => {
   assert.deepEqual(sink.serviceRequirement, ['water_supply', 'waste_pipe']);
 
   const validation = validateServiceDependencies(store, 'cabinet_2');
-  assert.equal(validation.ok, false);
+  assert.equal(validation.ok, true);
+  assert.equal(result.services.length, 4);
 });

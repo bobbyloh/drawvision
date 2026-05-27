@@ -1,5 +1,6 @@
 import { dispatchCommand } from './model-store.js';
 import { executeRelationshipCommand } from './relationship-commands.js';
+import { provisionKitchenServices } from './kitchen-services.js';
 
 export function generateKitchen(modelStore, command) {
   const errors = validateKitchenGenerate(command);
@@ -7,6 +8,7 @@ export function generateKitchen(modelStore, command) {
 
   const created = [];
   const relationships = [];
+  const services = [];
 
   const roomId = command.room_id;
   const start = command.start || [0, 0, 0];
@@ -51,12 +53,19 @@ export function generateKitchen(modelStore, command) {
       relationships.push(rel);
     }
 
+    if (command.auto_services !== false && cabinet.serviceRequirement?.length) {
+      const serviceResult = provisionKitchenServices(modelStore, cabinet);
+      if (!serviceResult.ok) return serviceResult;
+      services.push(...serviceResult.createdServices);
+    }
+
     x += cabinet.width;
   }
 
   return {
     ok: true,
     created,
+    services,
     relationships,
   };
 }
