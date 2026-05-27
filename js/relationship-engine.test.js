@@ -63,10 +63,18 @@ test('service connects to cabinet relationship', () => {
     position: [100, 0, 0],
   });
 
-  const result = connectService(store, 'cabinet_1', 'service_2');
+  dispatchCommand(store, {
+    cmd: 'service.create',
+    service_type: 'waste_pipe',
+    position: [150, 0, 0],
+  });
 
-  assert.equal(result.ok, true);
-  assert.deepEqual(result.object.connectedServices, ['service_2']);
+  const waterResult = connectService(store, 'cabinet_1', 'service_2');
+  const wasteResult = connectService(store, 'cabinet_1', 'service_3');
+
+  assert.equal(waterResult.ok, true);
+  assert.equal(wasteResult.ok, true);
+  assert.deepEqual(waterResult.object.connectedServices, ['service_2', 'service_3']);
 
   const validation = validateServiceDependencies(store, 'cabinet_1');
   assert.equal(validation.ok, true);
