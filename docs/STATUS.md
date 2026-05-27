@@ -9,11 +9,11 @@
 | service.create | Implemented |
 | room.detect | Implemented |
 | room.contains | Implemented |
-| automatic room containment | Implemented |
+| room.auto_contain | Implemented |
 | kitchen.generate | Implemented |
 | bathroom.generate | Implemented |
-| Kitchen Auto Services | Implemented |
-| Bathroom Auto Services | Implemented |
+| service.validate | Implemented |
+| Module Command Orchestrator | Implemented |
 | Relationship Engine | Implemented |
 | Service Dependency Validation | Implemented |
 | Scene Graph | Implemented |
@@ -24,21 +24,20 @@
 
 ## Current Working Pipeline
 
-room.detect
-→ object creation
+core command
+→ parametric geometry
+→ scene graph
+→ module command orchestrator
+→ kitchen/bathroom generation
 → automatic room containment
-→ module generation
-→ service rule assignment
-→ auto service.create
-→ auto service.connect
-→ scene graph relationships
-→ validation
+→ automatic services
+→ relationship validation
 → serialization
 
 ## Next Priorities
 
 1. Add viewport integration
-2. Add module command orchestrator
-3. Add planner agent prototype
-4. Add hospitality suite generator
+2. Add planner agent prototype
+3. Add hospitality suite generator
+4. Add project retrieval layer
 5. Add cost/product catalog hooks

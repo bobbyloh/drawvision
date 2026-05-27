@@ -81,3 +81,11 @@
 - Added automatic object-to-room containment detection
 - Added anchor point extraction for parametric objects
 - Added autoContainAllObjects helper
+
+## Module Command Orchestrator
+
+- Added module-orchestrator.js
+- Routed kitchen.generate through module command layer
+- Routed bathroom.generate through module command layer
+- Routed room.auto_contain through module command layer
+- Routed service.validate through module command layer

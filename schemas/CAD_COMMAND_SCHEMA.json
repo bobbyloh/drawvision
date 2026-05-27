@@ -117,6 +117,24 @@
         "material": "string",
         "auto_services": "boolean"
       }
+    },
+    "room.auto_contain": {
+      "required": [
+        "cmd"
+      ],
+      "properties": {
+        "cmd": "room.auto_contain"
+      }
+    },
+    "service.validate": {
+      "required": [
+        "cmd",
+        "object_id"
+      ],
+      "properties": {
+        "cmd": "service.validate",
+        "object_id": "object_id"
+      }
     }
   }
 }
