@@ -39,3 +39,12 @@
 - Added service.connect command
 - Added service rule presets
 - Added automatic service requirement assignment
+
+## Room Foundation
+
+- Added room.detect geometry object
+- Added room boundary area and centroid
+- Added point-in-room helper
+- Added room.contains relationship
+- Added room rendering adapter support
+- Updated command schema for room commands

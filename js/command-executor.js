@@ -1,6 +1,7 @@
 import { createWallGeometry } from './wall-geometry.js';
 import { createCabinetGeometry } from './cabinet-geometry.js';
 import { createServiceGeometry } from './service-geometry.js';
+import { createRoomGeometry } from './room-geometry.js';
 
 export function executeCommand(command, context = {}) {
   if (!command || !command.cmd) {
@@ -24,6 +25,9 @@ export function executeCommand(command, context = {}) {
 
     case 'service.create':
       return executeServiceCreate(command, context);
+
+    case 'room.detect':
+      return executeRoomDetect(command, context);
 
     default:
       return {
@@ -102,6 +106,30 @@ function executeServiceCreate(command, context) {
         type: 'object.created',
         objectId: service.id,
         objectKind: service.kind,
+      },
+    ],
+  };
+}
+
+
+function executeRoomDetect(command, context) {
+  const result = createRoomGeometry(command, {
+    idFactory: context.idFactory,
+  });
+
+  if (!result.ok) return result;
+
+  const room = result.room;
+
+  return {
+    ok: true,
+    command,
+    created: [room],
+    events: [
+      {
+        type: 'object.created',
+        objectId: room.id,
+        objectKind: room.kind,
       },
     ],
   };

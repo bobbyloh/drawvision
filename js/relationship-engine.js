@@ -75,3 +75,28 @@ function fail(code, message) {
     errors: [{ code, message }],
   };
 }
+
+
+export function containObjectInRoom(modelStore, objectId, roomId) {
+  const object = getNode(modelStore.sceneGraph, objectId);
+  const room = getNode(modelStore.sceneGraph, roomId);
+
+  if (!object) return fail('OBJECT_NOT_FOUND', `Object not found: ${objectId}`);
+  if (!room) return fail('ROOM_NOT_FOUND', `Room not found: ${roomId}`);
+  if (room.kind !== 'room') return fail('INVALID_ROOM', `${roomId} is not a room`);
+
+  object.parentRoom = roomId;
+  room.containedObjects = room.containedObjects || [];
+
+  if (!room.containedObjects.includes(objectId)) {
+    room.containedObjects.push(objectId);
+  }
+
+  addRelationship(modelStore.sceneGraph, {
+    type: 'contained_in',
+    parent: roomId,
+    child: objectId,
+  });
+
+  return { ok: true, object, room };
+}

@@ -8,6 +8,8 @@
 | wall.create | Implemented |
 | cabinet.create | Implemented |
 | service.create | Implemented |
+| room.detect | Implemented |
+| room.contains | Implemented |
 | Relationship Engine | Implemented |
 | Relationship Commands | Implemented |
 | Service Dependency Validation | Implemented |
@@ -28,6 +30,7 @@ JSON command input
 → parametric object geometry
 → service rule assignment
 → scene graph insertion
+→ room containment
 → relationships
 → service dependency validation
 → command history
@@ -44,13 +47,15 @@ JSON command input
 | wall.create | Implemented |
 | cabinet.create | Implemented |
 | service.create | Implemented |
+| room.detect | Implemented |
 | cabinet.attach_to_wall | Implemented |
 | service.connect | Implemented |
+| room.contains | Implemented |
 
 ## Next Priorities
 
-1. Integrate render adapter into viewport
-2. Add room detection
-3. Add room.contains relationships
-4. Add kitchen.generate
-5. Add bathroom.generate
+1. Add kitchen.generate
+2. Add bathroom.generate
+3. Add automatic room containment detection
+4. Add viewport integration
+5. Add planner agent prototype

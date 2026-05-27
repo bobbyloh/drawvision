@@ -1,6 +1,7 @@
 import {
   attachCabinetToWall,
   connectService,
+  containObjectInRoom,
 } from './relationship-engine.js';
 
 export function executeRelationshipCommand(modelStore, command) {
@@ -17,6 +18,13 @@ export function executeRelationshipCommand(modelStore, command) {
         modelStore,
         command.object_id,
         command.service_id,
+      );
+
+    case 'room.contains':
+      return containObjectInRoom(
+        modelStore,
+        command.object_id,
+        command.room_id,
       );
 
     default:

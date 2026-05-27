@@ -2,7 +2,14 @@
   "version": 1,
   "commands": {
     "wall.create": {
-      "required": ["cmd", "start", "end", "height", "thickness", "material"],
+      "required": [
+        "cmd",
+        "start",
+        "end",
+        "height",
+        "thickness",
+        "material"
+      ],
       "properties": {
         "cmd": "wall.create",
         "start": "vec3",
@@ -13,7 +20,15 @@
       }
     },
     "cabinet.create": {
-      "required": ["cmd", "type", "width", "depth", "height", "position", "orientation"],
+      "required": [
+        "cmd",
+        "type",
+        "width",
+        "depth",
+        "height",
+        "position",
+        "orientation"
+      ],
       "properties": {
         "cmd": "cabinet.create",
         "type": "string",
@@ -30,7 +45,11 @@
       }
     },
     "service.create": {
-      "required": ["cmd", "service_type", "position"],
+      "required": [
+        "cmd",
+        "service_type",
+        "position"
+      ],
       "properties": {
         "cmd": "service.create",
         "service_type": "string",
@@ -38,6 +57,31 @@
         "capacity": "string",
         "parent_room": "object_id",
         "connected_to": "array"
+      }
+    },
+    "room.detect": {
+      "required": [
+        "cmd",
+        "boundary"
+      ],
+      "properties": {
+        "cmd": "room.detect",
+        "name": "string",
+        "room_type": "string",
+        "boundary": "vec3_array",
+        "parent_level": "object_id"
+      }
+    },
+    "room.contains": {
+      "required": [
+        "cmd",
+        "room_id",
+        "object_id"
+      ],
+      "properties": {
+        "cmd": "room.contains",
+        "room_id": "object_id",
+        "object_id": "object_id"
       }
     }
   }

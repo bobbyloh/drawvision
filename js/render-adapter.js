@@ -17,6 +17,17 @@ export function nodeToRenderable(node) {
     };
   }
 
+  if (node.kind === 'room') {
+    return {
+      id: node.id,
+      type: 'room',
+      points: node.boundary,
+      area: node.area,
+      roomType: node.roomType,
+      source: node,
+    };
+  }
+
   if (node.kind === 'cabinet') {
     return {
       id: node.id,
