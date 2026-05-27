@@ -19,6 +19,7 @@ export const toolDefinitions = [
   { id: 'nearest', label: 'Near', command: 'snap nearest node', key: 'F' },
   { id: 'grid', label: 'Grid', command: 'snap grid intersection', key: 'G' },
   { id: 'flatten', label: 'Flat', command: 'merge line to 0', key: 'Alt+F' },
+  { id: 'box', label: 'Box', command: 'select box', key: 'Shift+B' },
 ];
 
 export const viewDefinitions = [

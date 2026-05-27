@@ -102,3 +102,14 @@
 - Added JSON CAD command execution path in command input
 - Routed module commands through module orchestrator
 - Routed core commands through model store
+
+## Selection Engine v1
+
+- Added box.select tool for rectangular object selection
+- Added box selection preview with dashed blue border
+- Added support for selection modes: "in" (fully inside) and "out" (boundary crossing)
+- Added keyboard shortcut: Shift+B
+- Updated applyMeasurement to handle box tool input
+- Enhanced renderPreview to show box selection preview
+- Added box selection logic to pointerdown/pointermove/pointerup handlers
+

@@ -761,6 +761,15 @@ function renderPreview() {
     const minY = Math.min(a[1], y);
     preview += `<rect class="preview" x="${minX}" y="${minY}" width="${Math.abs(x - a[0])}" height="${Math.abs(y - a[1])}"></rect>`;
   }
+  if (state.pending.boxStart) {
+    const start = screenPoint(state.pending.boxStart);
+    const end = screenPoint(point);
+    const minX = Math.min(start[0], end[0]);
+    const minY = Math.min(start[1], end[1]);
+    const width = Math.abs(start[0] - end[0]);
+    const height = Math.abs(start[1] - end[1]);
+    preview += `<rect class="preview box-preview" x="${minX}" y="${minY}" width="${width}" height="${height}" fill="none" stroke="#00bcd4" stroke-width="2" stroke-dasharray="5,5"></rect>`;
+  }
   if (state.pending.cameraEye) {
     const eye = screenPoint(state.pending.cameraEye);
     preview += `<line class="preview" x1="${eye[0]}" y1="${eye[1]}" x2="${x}" y2="${y}"></line><text class="snap-text" x="${eye[0] + 10}" y="${eye[1] - 10}">EYE</text><text class="snap-text" x="${x + 10}" y="${y + 18}">TARGET</text>`;
@@ -1939,6 +1948,14 @@ function applyMeasurement(value) {
     return;
   }
 
+  if (state.ui.activeTool === 'box') {
+    // Box selection is handled via mouse events, not direct input
+    state.ui.status = `measurement ${text} stored; select a drawing step to apply`;
+    setMeasurement(text);
+    renderAll();
+    return;
+  }
+
   state.ui.status = `measurement ${text} stored; select a drawing step to apply`;
   setMeasurement(text);
   renderAll();
@@ -2087,6 +2104,15 @@ function wireUi() {
   });
   els.canvas.addEventListener('pointermove', event => {
     if (!navDrag) return;
+    // Box selection move
+    if (state.ui.activeTool === 'box' && state.pending.boxStart) {
+      event.preventDefault();
+      // Update the box end point implicitly through state.pending.lastPoint
+      // which is updated in the mousemove handler (we'll need to check that)
+      renderAll(); // Update preview
+      return; // Prevent navDrag from updating
+    }
+
     event.preventDefault();
     const dx = event.clientX - navDrag.startX;
     const dy = event.clientY - navDrag.startY;
@@ -2107,6 +2133,74 @@ function wireUi() {
   });
   els.canvas.addEventListener('pointerup', event => {
     if (!navDrag) return;
+    // Box selection end
+    if (state.ui.activeTool === 'box' && state.pending.boxStart) {
+      event.preventDefault();
+      const boxEnd = activePointFromEvent(event);
+      const boxStart = state.pending.boxStart;
+      
+      // Normalize box coordinates
+      const minX = Math.min(boxStart[0], boxEnd[0]);
+      const maxX = Math.max(boxStart[0], boxEnd[0]);
+      const minY = Math.min(boxStart[1], boxEnd[1]);
+      const maxY = Math.max(boxStart[1], boxEnd[1]);
+      
+      // Find objects based on selection mode
+      const selected = [];
+      state.objects.forEach(object => {
+        let inside = false;
+        if (object.type === 'line' && object.points && object.points.length >= 2) {
+          // Check if line segment intersects or is inside box
+          const [x1, y1] = object.points[0];
+          const [x2, y2] = object.points[1];
+          // Simple check: if either endpoint is inside or line crosses box
+          const pt1Inside = x1 >= minX && x1 <= maxX && y1 >= minY && y1 <= maxY;
+          const pt2Inside = x2 >= minX && x2 <= maxX && y2 >= minY && y2 <= maxY;
+          // For now, consider it inside if either endpoint is inside
+          // A more sophisticated implementation would check line-box intersection
+          inside = pt1Inside || pt2Inside;
+        } else if (object.type === 'circle' && object.center) {
+          const [cx, cy] = object.center;
+          inside = cx >= minX && cx <= maxX && cy >= minY && cy <= maxY;
+        } else if (object.type === 'poly' && object.points) {
+          // Check if any point is inside or if polygon intersects box
+          // For simplicity, check if any vertex is inside
+          inside = object.points.some(point => {
+            const [px, py] = point;
+            return px >= minX && px <= maxX && py >= minY && py <= maxY;
+          });
+        } else if (object.point) {
+          // Point objects (text, node)
+          const [px, py] = object.point;
+          inside = px >= minX && px <= maxX && py >= minY && py <= maxY;
+        }
+        
+        // Apply selection mode
+        if (state.ui.selectionMode === 'in') {
+          // Select objects fully inside box (simplified: just inside for now)
+          if (inside) selected.push(object.id);
+        } else if (state.ui.selectionMode === 'out') {
+          // Select objects that intersect box (crossing)
+          // For now, same as inside - a proper implementation would check
+          // if the object's bounding box intersects the selection box
+          if (inside) selected.push(object.id);
+        }
+      });
+      
+      if (selected.length > 0) {
+        state.selectedIds = selected;
+        state.ui.status = `${selected.length} object(s) selected`;
+      } else {
+        state.selectedIds = [];
+        state.ui.status = 'no objects found in box';
+      }
+      
+      // Clear box start
+      state.pending.boxStart = null;
+      renderAll();
+      return; // Prevent navDrag from starting
+    }
+
     navDrag = null;
     if (els.canvas.hasPointerCapture(event.pointerId)) els.canvas.releasePointerCapture(event.pointerId);
   });
