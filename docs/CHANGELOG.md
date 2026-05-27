@@ -95,3 +95,10 @@
 - Added app bridge from modelStore scene graph to legacy state.objects
 - Added render adapter conversion to existing viewport object format
 - Added support for wall, room, cabinet, and service legacy render objects
+
+## App JSON Command Integration
+
+- Wired app bridge into app.js
+- Added JSON CAD command execution path in command input
+- Routed module commands through module orchestrator
+- Routed core commands through model store

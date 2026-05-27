@@ -13,8 +13,9 @@
 | kitchen.generate | Implemented |
 | bathroom.generate | Implemented |
 | module orchestrator | Implemented |
-| automatic room containment | Implemented |
 | app bridge to legacy viewport state | Implemented |
+| JSON command input in app.js | Implemented |
+| automatic room containment | Implemented |
 | Scene Graph | Implemented |
 | Render Adapter | Implemented |
 | Serialization | Implemented |
@@ -23,18 +24,39 @@
 
 ## Current Working Pipeline
 
-core/module command
+JSON typed into app command input
+→ app bridge
+→ core/module command routing
 → model store
 → scene graph
 → render adapter
-→ app bridge
 → legacy state.objects
 → existing viewport renderer
 
+## Example JSON Commands
+
+### Create Room
+
+{
+  "cmd": "room.detect",
+  "name": "Kitchen",
+  "room_type": "kitchen",
+  "boundary": [[0,0,0],[5000,0,0],[5000,3000,0],[0,3000,0]]
+}
+
+### Generate Kitchen
+
+{
+  "cmd": "kitchen.generate",
+  "room_id": "room_1",
+  "layout_type": "linear",
+  "start": [100,100,0]
+}
+
 ## Next Priorities
 
-1. Wire app bridge into app.js command input
-2. Add UI command for JSON command execution
-3. Add planner agent prototype
-4. Add hospitality suite generator
-5. Add project retrieval layer
+1. Browser smoke test
+2. Planner agent prototype
+3. Hospitality suite generator
+4. Project retrieval layer
+5. Cost/product catalog hooks

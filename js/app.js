@@ -1,4 +1,5 @@
 import { menuCommands, state, toolDefinitions, viewDefinitions } from './state.js';
+import { createAppBridge } from './app-bridge.js';
 
 const els = {
   toolRail: document.getElementById('toolRail'),
@@ -36,6 +37,8 @@ const storage = {
   recent: 'drawvision.recentModels',
   settings: 'drawvision.settings',
 };
+
+const appBridge = createAppBridge(state);
 
 const toolHints = {
   select: 'Select: click entity, right-click properties, Space returns to select.',
@@ -1433,10 +1436,45 @@ function openJsonFile(file) {
   reader.readAsText(file);
 }
 
+
+function tryExecuteJsonCadCommand(command) {
+  if (!command.trim().startsWith('{')) return false;
+
+  try {
+    const parsed = JSON.parse(command);
+
+    let result;
+    if (['kitchen.generate', 'bathroom.generate', 'room.auto_contain', 'service.validate'].includes(parsed.cmd)) {
+      result = appBridge.dispatchModule(parsed);
+    } else {
+      result = appBridge.dispatchCore(parsed);
+    }
+
+    if (!result.ok) {
+      state.ui.status = `CAD command failed: ${result.errors?.[0]?.message || 'unknown error'}`;
+      log(`ERR> ${JSON.stringify(result.errors || result)}`);
+      renderAll();
+      return true;
+    }
+
+    state.ui.status = `executed ${parsed.cmd}`;
+    log(`OK> ${parsed.cmd}`);
+    saveLocal();
+    renderAll();
+    return true;
+  } catch (error) {
+    state.ui.status = `invalid JSON command: ${error.message}`;
+    log(`ERR> ${error.message}`);
+    renderAll();
+    return true;
+  }
+}
+
 function executeCommand(raw) {
   const command = raw.trim();
   const text = command.toLowerCase();
   if (!command) return;
+  if (tryExecuteJsonCadCommand(command)) return;
   log(`DV> ${command}`);
   els.commandInput.value = command;
   els.promptInput.value = '';
