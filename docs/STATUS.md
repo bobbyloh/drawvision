@@ -12,10 +12,9 @@
 | room.auto_contain | Implemented |
 | kitchen.generate | Implemented |
 | bathroom.generate | Implemented |
-| service.validate | Implemented |
-| Module Command Orchestrator | Implemented |
-| Relationship Engine | Implemented |
-| Service Dependency Validation | Implemented |
+| module orchestrator | Implemented |
+| automatic room containment | Implemented |
+| app bridge to legacy viewport state | Implemented |
 | Scene Graph | Implemented |
 | Render Adapter | Implemented |
 | Serialization | Implemented |
@@ -24,20 +23,18 @@
 
 ## Current Working Pipeline
 
-core command
-→ parametric geometry
+core/module command
+→ model store
 → scene graph
-→ module command orchestrator
-→ kitchen/bathroom generation
-→ automatic room containment
-→ automatic services
-→ relationship validation
-→ serialization
+→ render adapter
+→ app bridge
+→ legacy state.objects
+→ existing viewport renderer
 
 ## Next Priorities
 
-1. Add viewport integration
-2. Add planner agent prototype
-3. Add hospitality suite generator
-4. Add project retrieval layer
-5. Add cost/product catalog hooks
+1. Wire app bridge into app.js command input
+2. Add UI command for JSON command execution
+3. Add planner agent prototype
+4. Add hospitality suite generator
+5. Add project retrieval layer

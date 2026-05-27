@@ -89,3 +89,9 @@
 - Routed bathroom.generate through module command layer
 - Routed room.auto_contain through module command layer
 - Routed service.validate through module command layer
+
+## App Bridge Foundation
+
+- Added app bridge from modelStore scene graph to legacy state.objects
+- Added render adapter conversion to existing viewport object format
+- Added support for wall, room, cabinet, and service legacy render objects
