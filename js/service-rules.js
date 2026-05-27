@@ -19,6 +19,20 @@ export const SERVICE_RULES = {
     'waste_pipe',
     'lighting_point',
   ],
+
+  wc: [
+    'water_supply',
+    'waste_pipe',
+  ],
+
+  shower: [
+    'water_supply',
+    'waste_pipe',
+  ],
+
+  floor_trap: [
+    'waste_pipe',
+  ],
 };
 
 export function applyServiceRules(object) {

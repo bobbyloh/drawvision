@@ -62,3 +62,10 @@
 - Added automatic service.create for required cabinet services
 - Added automatic service.connect for generated services
 - Updated kitchen.generate to validate generated kitchen service dependencies
+
+## Bathroom Generator Foundation
+
+- Added bathroom.generate module generator
+- Added bathroom fixture generation
+- Added automatic service provisioning for vanity, WC, shower, and floor trap
+- Added room containment for bathroom fixtures

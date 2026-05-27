@@ -3,6 +3,7 @@ import { createCabinetGeometry } from './cabinet-geometry.js';
 import { createServiceGeometry } from './service-geometry.js';
 import { createRoomGeometry } from './room-geometry.js';
 import { generateKitchen } from './kitchen-generator.js';
+import { generateBathroom } from './bathroom-generator.js';
 
 export function executeCommand(command, context = {}) {
   if (!command || !command.cmd) {
@@ -34,6 +35,12 @@ export function executeCommand(command, context = {}) {
       return {
         ok: false,
         errors: [{ code: 'KITCHEN_REQUIRES_MODEL_STORE', message: 'kitchen.generate must be dispatched through module orchestration, not bare command executor' }],
+      };
+
+    case 'bathroom.generate':
+      return {
+        ok: false,
+        errors: [{ code: 'BATHROOM_REQUIRES_MODEL_STORE', message: 'bathroom.generate must be dispatched through module orchestration, not bare command executor' }],
       };
 
     default:

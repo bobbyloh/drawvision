@@ -102,6 +102,21 @@
         "material": "string",
         "auto_services": "boolean"
       }
+    },
+    "bathroom.generate": {
+      "required": [
+        "cmd",
+        "room_id"
+      ],
+      "properties": {
+        "cmd": "bathroom.generate",
+        "room_id": "object_id",
+        "start": "vec3",
+        "fixtures": "array",
+        "spacing": "number_mm",
+        "material": "string",
+        "auto_services": "boolean"
+      }
     }
   }
 }
