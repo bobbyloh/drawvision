@@ -6,14 +6,15 @@
 |---|---|
 | Command Executor | Implemented |
 | wall.create | Implemented |
-| Wall Geometry Validation | Implemented |
+| cabinet.create | Implemented |
+| service.create | Implemented |
 | Scene Graph | Implemented |
+| Relationship Engine | Implemented |
+| Service Dependency Validation | Implemented |
 | Scene Graph Render Adapter | Implemented |
 | JSON Command Input Helper | Implemented |
 | Serialization | Implemented |
 | Undo/Redo for Created Objects | Implemented |
-| cabinet.create | Implemented |
-| service.create | Implemented |
 | Kitchen Module | Planned |
 | Bathroom Module | Planned |
 | Agents | Defined, not active |
@@ -24,6 +25,8 @@ JSON command input
 → command executor
 → parametric object geometry
 → scene graph insertion
+→ relationships
+→ service dependency validation
 → command history
 → undo stack
 → serialization
@@ -31,19 +34,20 @@ JSON command input
 → undo/redo
 → render adapter
 
-## Implemented Commands
+## Implemented Commands / Systems
 
-| Command | Status |
+| Item | Status |
 |---|---|
 | wall.create | Implemented |
 | cabinet.create | Implemented |
 | service.create | Implemented |
+| cabinet.attach_to_wall | Implemented as relationship engine function |
+| service.connect | Implemented as relationship engine function |
 
 ## Next Priorities
 
-1. Integrate model store with app UI/state
-2. Render scene graph objects in viewport
-3. Add cabinet attach-to-wall relationship
-4. Add service dependency validation
-5. Add kitchen.generate
-6. Add bathroom.generate
+1. Promote relationship functions into formal command executor commands
+2. Add cabinet attach-to-wall validation
+3. Add service dependency rule presets for sink_base, hob_base, wc, vanity
+4. Add kitchen.generate
+5. Add bathroom.generate

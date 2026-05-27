@@ -26,3 +26,9 @@
 - Added service.create dependency object
 - Updated command executor for modular objects
 - Updated command schema
+
+## Relationship Engine
+
+- Added cabinet-to-wall attachment relationship
+- Added service connection relationship
+- Added service dependency validation
