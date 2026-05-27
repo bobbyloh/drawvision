@@ -2206,3 +2206,10 @@ function bootWorkspace() {
 bootWorkspace();
 wireUi();
 renderAll();
+
+// DrawVision JSON console late binding fallback
+window.addEventListener('DOMContentLoaded', () => {
+  if (typeof setupJsonCommandPanel === 'function') {
+    setupJsonCommandPanel();
+  }
+});
