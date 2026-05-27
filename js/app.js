@@ -285,7 +285,8 @@ function applySettingsFromDialog() {
   saveSettings();
   applySettingsToUi();
   saveLocal();
-  renderAll();
+  setupJsonCommandPanel();
+renderAll();
   state.ui.status = 'app settings applied';
 }
 
@@ -1468,6 +1469,40 @@ function tryExecuteJsonCadCommand(command) {
     renderAll();
     return true;
   }
+}
+
+
+function setupJsonCommandPanel() {
+  const input = document.getElementById('dvJsonCommandInput');
+  const run = document.getElementById('dvRunJsonCommand');
+  const room = document.getElementById('dvFillRoomCommand');
+  const kitchen = document.getElementById('dvFillKitchenCommand');
+  const status = document.getElementById('dvJsonCommandStatus');
+
+  if (!input || !run) return;
+
+  room?.addEventListener('click', () => {
+    input.value = JSON.stringify({
+      cmd: 'room.detect',
+      name: 'Kitchen',
+      room_type: 'kitchen',
+      boundary: [[0,0,0],[5000,0,0],[5000,3000,0],[0,3000,0]]
+    });
+  });
+
+  kitchen?.addEventListener('click', () => {
+    input.value = JSON.stringify({
+      cmd: 'kitchen.generate',
+      room_id: 'room_1',
+      layout_type: 'linear',
+      start: [100,100,0]
+    });
+  });
+
+  run.addEventListener('click', () => {
+    const ok = tryExecuteJsonCadCommand(input.value);
+    status.textContent = ok ? state.ui.status : 'Command was not handled';
+  });
 }
 
 function executeCommand(raw) {
