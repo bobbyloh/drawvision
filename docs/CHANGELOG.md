@@ -48,3 +48,10 @@
 - Added room.contains relationship
 - Added room rendering adapter support
 - Updated command schema for room commands
+
+## Kitchen Generator Foundation
+
+- Added kitchen.generate module generator
+- Added linear cabinet sequence generation
+- Added room containment for generated cabinets
+- Added service rule inheritance for generated kitchen cabinets

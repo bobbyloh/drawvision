@@ -2,6 +2,7 @@ import { createWallGeometry } from './wall-geometry.js';
 import { createCabinetGeometry } from './cabinet-geometry.js';
 import { createServiceGeometry } from './service-geometry.js';
 import { createRoomGeometry } from './room-geometry.js';
+import { generateKitchen } from './kitchen-generator.js';
 
 export function executeCommand(command, context = {}) {
   if (!command || !command.cmd) {
@@ -28,6 +29,12 @@ export function executeCommand(command, context = {}) {
 
     case 'room.detect':
       return executeRoomDetect(command, context);
+
+    case 'kitchen.generate':
+      return {
+        ok: false,
+        errors: [{ code: 'KITCHEN_REQUIRES_MODEL_STORE', message: 'kitchen.generate must be dispatched through module orchestration, not bare command executor' }],
+      };
 
     default:
       return {

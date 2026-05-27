@@ -83,6 +83,24 @@
         "room_id": "object_id",
         "object_id": "object_id"
       }
+    },
+    "kitchen.generate": {
+      "required": [
+        "cmd",
+        "room_id",
+        "layout_type"
+      ],
+      "properties": {
+        "cmd": "kitchen.generate",
+        "room_id": "object_id",
+        "layout_type": "string",
+        "start": "vec3",
+        "sequence": "array",
+        "default_width": "number_mm",
+        "default_depth": "number_mm",
+        "default_height": "number_mm",
+        "material": "string"
+      }
     }
   }
 }

@@ -10,52 +10,32 @@
 | service.create | Implemented |
 | room.detect | Implemented |
 | room.contains | Implemented |
+| kitchen.generate | Implemented as module generator |
 | Relationship Engine | Implemented |
-| Relationship Commands | Implemented |
 | Service Dependency Validation | Implemented |
 | Service Rule Presets | Implemented |
 | Scene Graph | Implemented |
-| Scene Graph Render Adapter | Implemented |
-| JSON Command Input Helper | Implemented |
+| Render Adapter | Implemented |
 | Serialization | Implemented |
-| Undo/Redo for Created Objects | Implemented |
-| Kitchen Module | Planned |
+| Undo/Redo | Implemented |
 | Bathroom Module | Planned |
 | Agents | Defined, not active |
 
 ## Current Working Pipeline
 
-JSON command input
-→ command executor
-→ parametric object geometry
+room.detect
+→ kitchen.generate
+→ cabinet.create sequence
 → service rule assignment
-→ scene graph insertion
-→ room containment
-→ relationships
-→ service dependency validation
-→ command history
-→ undo stack
+→ room.contains
+→ scene graph
+→ validation
 → serialization
-→ reload
-→ undo/redo
-→ render adapter
-
-## Implemented Commands
-
-| Command | Status |
-|---|---|
-| wall.create | Implemented |
-| cabinet.create | Implemented |
-| service.create | Implemented |
-| room.detect | Implemented |
-| cabinet.attach_to_wall | Implemented |
-| service.connect | Implemented |
-| room.contains | Implemented |
 
 ## Next Priorities
 
-1. Add kitchen.generate
-2. Add bathroom.generate
-3. Add automatic room containment detection
+1. Add automatic kitchen service point generation
+2. Add service.connect orchestration for sink_base and hob_base
+3. Add bathroom.generate
 4. Add viewport integration
 5. Add planner agent prototype
