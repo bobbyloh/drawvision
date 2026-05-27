@@ -1,7 +1,8 @@
 {
+  "version": 1,
   "commands": {
     "wall.create": {
-      "required": ["cmd", "start", "end", "height", "thickness"],
+      "required": ["cmd", "start", "end", "height", "thickness", "material"],
       "properties": {
         "cmd": "wall.create",
         "start": "vec3",
@@ -21,7 +22,22 @@
         "height": "number_mm",
         "position": "vec3",
         "orientation": "degrees",
-        "material": "string"
+        "material": "string",
+        "service_requirement": "array",
+        "clearance_front": "number_mm",
+        "parent_wall": "object_id",
+        "parent_room": "object_id"
+      }
+    },
+    "service.create": {
+      "required": ["cmd", "service_type", "position"],
+      "properties": {
+        "cmd": "service.create",
+        "service_type": "string",
+        "position": "vec3",
+        "capacity": "string",
+        "parent_room": "object_id",
+        "connected_to": "array"
       }
     }
   }

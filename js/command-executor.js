@@ -1,4 +1,6 @@
 import { createWallGeometry } from './wall-geometry.js';
+import { createCabinetGeometry } from './cabinet-geometry.js';
+import { createServiceGeometry } from './service-geometry.js';
 
 export function executeCommand(command, context = {}) {
   if (!command || !command.cmd) {
@@ -16,6 +18,12 @@ export function executeCommand(command, context = {}) {
   switch (command.cmd) {
     case 'wall.create':
       return executeWallCreate(command, context);
+
+    case 'cabinet.create':
+      return executeCabinetCreate(command, context);
+
+    case 'service.create':
+      return executeServiceCreate(command, context);
 
     default:
       return {
@@ -48,6 +56,52 @@ function executeWallCreate(command, context) {
         type: 'object.created',
         objectId: wall.id,
         objectKind: wall.kind,
+      },
+    ],
+  };
+}
+
+function executeCabinetCreate(command, context) {
+  const result = createCabinetGeometry(command, {
+    idFactory: context.idFactory,
+  });
+
+  if (!result.ok) return result;
+
+  const cabinet = result.cabinet;
+
+  return {
+    ok: true,
+    command,
+    created: [cabinet],
+    events: [
+      {
+        type: 'object.created',
+        objectId: cabinet.id,
+        objectKind: cabinet.kind,
+      },
+    ],
+  };
+}
+
+function executeServiceCreate(command, context) {
+  const result = createServiceGeometry(command, {
+    idFactory: context.idFactory,
+  });
+
+  if (!result.ok) return result;
+
+  const service = result.service;
+
+  return {
+    ok: true,
+    command,
+    created: [service],
+    events: [
+      {
+        type: 'object.created',
+        objectId: service.id,
+        objectKind: service.kind,
       },
     ],
   };

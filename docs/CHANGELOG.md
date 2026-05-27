@@ -17,3 +17,12 @@
 - Added model store
 - Added serialization and reload support
 - Added undo/redo for created objects
+
+## Modular Foundation Expansion
+
+- Added scene graph render adapter
+- Added JSON command input helper
+- Added cabinet.create parametric object
+- Added service.create dependency object
+- Updated command executor for modular objects
+- Updated command schema
