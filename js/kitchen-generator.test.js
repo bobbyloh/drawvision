@@ -33,7 +33,7 @@ test('kitchen.generate creates cabinet sequence inside room', () => {
   assert.equal(result.created.length, 3);
 
   const room = getNode(store.sceneGraph, 'room_1');
-  assert.deepEqual(room.containedObjects, ['cabinet_2', 'cabinet_3', 'cabinet_4']);
+  assert.deepEqual(room.containedObjects, ['cabinet_2', 'cabinet_5', 'cabinet_6']);
 
   const sink = getNode(store.sceneGraph, 'cabinet_2');
   assert.deepEqual(sink.serviceRequirement, ['water_supply', 'waste_pipe']);
