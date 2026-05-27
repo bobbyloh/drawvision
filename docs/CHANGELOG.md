@@ -75,3 +75,9 @@
 - Added automatic object-to-room containment detection
 - Added anchor point extraction for parametric objects
 - Added autoContainAllObjects helper
+
+## Automatic Room Containment
+
+- Added automatic object-to-room containment detection
+- Added anchor point extraction for parametric objects
+- Added autoContainAllObjects helper
