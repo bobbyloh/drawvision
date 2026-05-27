@@ -1,3 +1,5 @@
+import { applyServiceRules } from './service-rules.js';
+
 const CABINET_TYPES = [
   'base_cabinet',
   'wall_cabinet',
@@ -16,9 +18,7 @@ export function createCabinetGeometry(command, options = {}) {
 
   const id = command.id || options.idFactory?.('cabinet') || `cabinet_${Date.now()}`;
 
-  return {
-    ok: true,
-    cabinet: {
+  const cabinet = {
       id,
       kind: 'cabinet',
       cabinetType: command.type,
@@ -35,7 +35,13 @@ export function createCabinetGeometry(command, options = {}) {
       derived: {
         footprint: deriveCabinetFootprint(command),
       },
-    },
+    };
+
+  applyServiceRules(cabinet);
+
+  return {
+    ok: true,
+    cabinet,
   };
 }
 

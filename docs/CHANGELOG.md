@@ -32,3 +32,10 @@
 - Added cabinet-to-wall attachment relationship
 - Added service connection relationship
 - Added service dependency validation
+
+## Relationship Commands
+
+- Added cabinet.attach_to_wall command
+- Added service.connect command
+- Added service rule presets
+- Added automatic service requirement assignment

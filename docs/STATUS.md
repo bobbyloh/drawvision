@@ -8,9 +8,11 @@
 | wall.create | Implemented |
 | cabinet.create | Implemented |
 | service.create | Implemented |
-| Scene Graph | Implemented |
 | Relationship Engine | Implemented |
+| Relationship Commands | Implemented |
 | Service Dependency Validation | Implemented |
+| Service Rule Presets | Implemented |
+| Scene Graph | Implemented |
 | Scene Graph Render Adapter | Implemented |
 | JSON Command Input Helper | Implemented |
 | Serialization | Implemented |
@@ -24,6 +26,7 @@
 JSON command input
 → command executor
 → parametric object geometry
+→ service rule assignment
 → scene graph insertion
 → relationships
 → service dependency validation
@@ -34,20 +37,20 @@ JSON command input
 → undo/redo
 → render adapter
 
-## Implemented Commands / Systems
+## Implemented Commands
 
-| Item | Status |
+| Command | Status |
 |---|---|
 | wall.create | Implemented |
 | cabinet.create | Implemented |
 | service.create | Implemented |
-| cabinet.attach_to_wall | Implemented as relationship engine function |
-| service.connect | Implemented as relationship engine function |
+| cabinet.attach_to_wall | Implemented |
+| service.connect | Implemented |
 
 ## Next Priorities
 
-1. Promote relationship functions into formal command executor commands
-2. Add cabinet attach-to-wall validation
-3. Add service dependency rule presets for sink_base, hob_base, wc, vanity
+1. Integrate render adapter into viewport
+2. Add room detection
+3. Add room.contains relationships
 4. Add kitchen.generate
 5. Add bathroom.generate
