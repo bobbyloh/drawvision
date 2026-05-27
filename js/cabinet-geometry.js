@@ -10,6 +10,10 @@ const CABINET_TYPES = [
   'corner_cabinet',
   'appliance_tower',
   'island_cabinet',
+  'floor_trap',
+  'shower',
+  'wc',
+  'vanity',
 ];
 
 export function createCabinetGeometry(command, options = {}) {
