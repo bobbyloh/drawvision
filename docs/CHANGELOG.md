@@ -69,3 +69,9 @@
 - Added bathroom fixture generation
 - Added automatic service provisioning for vanity, WC, shower, and floor trap
 - Added room containment for bathroom fixtures
+
+## Automatic Room Containment
+
+- Added automatic object-to-room containment detection
+- Added anchor point extraction for parametric objects
+- Added autoContainAllObjects helper
