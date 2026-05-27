@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://drawvision.local/schemas/cad-command.schema.json",
+  "title": "DrawVision CAD Command Schema",
+  "description": "Lean structured command contract. AI, UI, imports, and MCP integrations may propose commands only through this schema.",
+  "oneOf": [
+    { "$ref": "#/$defs/wallCreate" },
+    { "$ref": "#/$defs/wallModify" },
+    { "$ref": "#/$defs/wallDelete" },
+    { "$ref": "#/$defs/wallJoin" },
+    { "$ref": "#/$defs/openingInsert" },
+    { "$ref": "#/$defs/roomDetect" },
+    { "$ref": "#/$defs/slabCreate" },
+    { "$ref": "#/$defs/ceilingCreate" },
+    { "$ref": "#/$defs/zoneDefine" },
+    { "$ref": "#/$defs/cabinetCreate" },
+    { "$ref": "#/$defs/cabinetArray" },
+    { "$ref": "#/$defs/cabinetAttachToWall" },
+    { "$ref": "#/$defs/kitchenGenerate" },
+    { "$ref": "#/$defs/bathroomGenerate" },
+    { "$ref": "#/$defs/serviceCreate" },
+    { "$ref": "#/$defs/serviceConnect" },
+    { "$ref": "#/$defs/objectSelect" },
+    { "$ref": "#/$defs/objectTransform" },
+    { "$ref": "#/$defs/materialAssign" }
+  ],
+  "$defs": {
+    "objectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$"
+    },
+    "point3": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "positiveNumber": { "type": "number", "exclusiveMinimum": 0 },
+    "nonNegativeNumber": { "type": "number", "minimum": 0 },
+    "materialId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "layerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["command_line", "pointer_tool", "inspector", "file_import", "mcp", "ai_proposal", "test"]
+        },
+        "requestId": { "type": "string" },
+        "units": { "type": "string", "enum": ["mm", "m", "cm", "in", "ft"] }
+      }
+    },
+    "wallPath": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "start", "end"],
+          "properties": {
+            "type": { "const": "line" },
+            "start": { "$ref": "#/$defs/point3" },
+            "end": { "$ref": "#/$defs/point3" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "center", "radius", "startAngle", "endAngle"],
+          "properties": {
+            "type": { "const": "arc" },
+            "center": { "$ref": "#/$defs/point3" },
+            "radius": { "$ref": "#/$defs/positiveNumber" },
+            "startAngle": { "type": "number" },
+            "endAngle": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "wallReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "line": { "type": "string", "enum": ["centerline", "interior_face", "exterior_face"], "default": "centerline" },
+        "side": { "type": "string", "enum": ["left", "right"], "default": "left" },
+        "offset": { "type": "number", "default": 0 }
+      }
+    },
+    "finishLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side", "thickness", "material"],
+      "properties": {
+        "side": { "type": "string", "enum": ["interior", "exterior", "core"] },
+        "thickness": { "$ref": "#/$defs/positiveNumber" },
+        "material": { "$ref": "#/$defs/materialId" }
+      }
+    },
+    "openingSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "centerlineOffset", "width", "height"],
+      "properties": {
+        "id": { "$ref": "#/$defs/objectId" },
+        "kind": { "type": "string", "enum": ["door", "window", "void"] },
+        "centerlineOffset": { "$ref": "#/$defs/nonNegativeNumber" },
+        "width": { "$ref": "#/$defs/positiveNumber" },
+        "height": { "$ref": "#/$defs/positiveNumber" },
+        "sillHeight": { "$ref": "#/$defs/nonNegativeNumber", "default": 0 },
+        "material": { "$ref": "#/$defs/materialId" }
+      }
+    },
+    "cabinetType": {
+      "type": "string",
+      "enum": ["base_cabinet", "wall_cabinet", "tall_cabinet", "sink_base", "hob_base", "drawer_unit", "corner_cabinet", "appliance_tower", "island_cabinet"]
+    },
+    "serviceType": {
+      "type": "string",
+      "enum": ["water_supply", "waste_pipe", "electrical_point", "lighting_point", "switch_point", "exhaust_point", "gas_point", "data_point"]
+    },
+    "wallCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "height", "thickness", "material"],
+      "anyOf": [{ "required": ["start", "end"] }, { "required": ["path"] }],
+      "properties": {
+        "cmd": { "const": "wall.create" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "start": { "$ref": "#/$defs/point3" },
+        "end": { "$ref": "#/$defs/point3" },
+        "path": { "$ref": "#/$defs/wallPath" },
+        "reference": { "$ref": "#/$defs/wallReference" },
+        "height": { "$ref": "#/$defs/positiveNumber" },
+        "thickness": { "$ref": "#/$defs/positiveNumber" },
+        "finishLayers": { "type": "array", "items": { "$ref": "#/$defs/finishLayer" }, "default": [] },
+        "openings": { "type": "array", "items": { "$ref": "#/$defs/openingSpec" }, "default": [] },
+        "material": { "$ref": "#/$defs/materialId" },
+        "layer": { "$ref": "#/$defs/layerId", "default": "A-WALL" },
+        "baseOffset": { "$ref": "#/$defs/nonNegativeNumber", "default": 0 },
+        "join": { "type": "string", "enum": ["none", "auto"], "default": "auto" },
+        "select": { "type": "boolean", "default": true },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "wallModify": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "id"],
+      "properties": {
+        "cmd": { "const": "wall.modify" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "start": { "$ref": "#/$defs/point3" },
+        "end": { "$ref": "#/$defs/point3" },
+        "path": { "$ref": "#/$defs/wallPath" },
+        "height": { "$ref": "#/$defs/positiveNumber" },
+        "thickness": { "$ref": "#/$defs/positiveNumber" },
+        "finishLayers": { "type": "array", "items": { "$ref": "#/$defs/finishLayer" } },
+        "material": { "$ref": "#/$defs/materialId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "wallDelete": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "id"],
+      "properties": {
+        "cmd": { "const": "wall.delete" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "wallJoin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "wallIds"],
+      "properties": {
+        "cmd": { "const": "wall.join" },
+        "wallIds": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "minItems": 2, "uniqueItems": true },
+        "tolerance": { "$ref": "#/$defs/nonNegativeNumber", "default": 1 },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "openingInsert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "wallId", "opening"],
+      "properties": {
+        "cmd": { "const": "opening.insert" },
+        "wallId": { "$ref": "#/$defs/objectId" },
+        "opening": { "$ref": "#/$defs/openingSpec" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "roomDetect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "room.detect" },
+        "wallIds": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "uniqueItems": true },
+        "tolerance": { "$ref": "#/$defs/nonNegativeNumber", "default": 1 },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "slabCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "boundary", "thickness", "material"],
+      "properties": {
+        "cmd": { "const": "slab.create" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "boundary": { "type": "array", "items": { "$ref": "#/$defs/point3" }, "minItems": 3 },
+        "thickness": { "$ref": "#/$defs/positiveNumber" },
+        "elevation": { "type": "number", "default": 0 },
+        "material": { "$ref": "#/$defs/materialId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "ceilingCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "boundary", "height", "material"],
+      "properties": {
+        "cmd": { "const": "ceiling.create" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "boundary": { "type": "array", "items": { "$ref": "#/$defs/point3" }, "minItems": 3 },
+        "height": { "$ref": "#/$defs/positiveNumber" },
+        "material": { "$ref": "#/$defs/materialId" },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "zoneDefine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "name"],
+      "properties": {
+        "cmd": { "const": "zone.define" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "name": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string" },
+        "boundary": { "type": "array", "items": { "$ref": "#/$defs/point3" }, "minItems": 3 },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "cabinetCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "type", "width", "depth", "height", "position", "orientation", "material"],
+      "properties": {
+        "cmd": { "const": "cabinet.create" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "type": { "$ref": "#/$defs/cabinetType" },
+        "width": { "$ref": "#/$defs/positiveNumber" },
+        "depth": { "$ref": "#/$defs/positiveNumber" },
+        "height": { "$ref": "#/$defs/positiveNumber" },
+        "position": { "$ref": "#/$defs/point3" },
+        "orientation": { "type": "number" },
+        "material": { "$ref": "#/$defs/materialId" },
+        "clearanceZone": { "$ref": "#/$defs/nonNegativeNumber", "default": 900 },
+        "serviceRequirement": { "type": "array", "items": { "$ref": "#/$defs/serviceType" }, "uniqueItems": true, "default": [] },
+        "parentWall": { "$ref": "#/$defs/objectId" },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "select": { "type": "boolean", "default": true },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "cabinetArray": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "sourceCabinetId", "count", "direction", "spacing"],
+      "properties": {
+        "cmd": { "const": "cabinet.array" },
+        "sourceCabinetId": { "$ref": "#/$defs/objectId" },
+        "count": { "type": "integer", "minimum": 1 },
+        "direction": { "$ref": "#/$defs/point3" },
+        "spacing": { "$ref": "#/$defs/nonNegativeNumber" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "cabinetAttachToWall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "cabinetId", "wallId"],
+      "properties": {
+        "cmd": { "const": "cabinet.attach_to_wall" },
+        "cabinetId": { "$ref": "#/$defs/objectId" },
+        "wallId": { "$ref": "#/$defs/objectId" },
+        "offset": { "$ref": "#/$defs/nonNegativeNumber" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "kitchenGenerate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "parentRoom", "layout"],
+      "properties": {
+        "cmd": { "const": "kitchen.generate" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "layout": { "type": "string", "enum": ["linear", "L-shaped", "galley", "U-shaped", "island"] },
+        "targetWallIds": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "uniqueItems": true },
+        "serviceIds": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "uniqueItems": true },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "bathroomGenerate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "parentRoom"],
+      "properties": {
+        "cmd": { "const": "bathroom.generate" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "serviceIds": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "uniqueItems": true },
+        "fixturePreferences": { "type": "object", "additionalProperties": true },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "serviceCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "type", "position"],
+      "properties": {
+        "cmd": { "const": "service.create" },
+        "id": { "$ref": "#/$defs/objectId" },
+        "type": { "$ref": "#/$defs/serviceType" },
+        "position": { "$ref": "#/$defs/point3" },
+        "hostId": { "$ref": "#/$defs/objectId" },
+        "parentRoom": { "$ref": "#/$defs/objectId" },
+        "capacity": { "type": "number" },
+        "rating": { "type": "string" },
+        "metadata": { "type": "object", "additionalProperties": true },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "serviceConnect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "serviceId", "targetId"],
+      "properties": {
+        "cmd": { "const": "service.connect" },
+        "serviceId": { "$ref": "#/$defs/objectId" },
+        "targetId": { "$ref": "#/$defs/objectId" },
+        "relationship": { "type": "string", "default": "serves" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "objectSelect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "ids"],
+      "properties": {
+        "cmd": { "const": "object.select" },
+        "ids": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "uniqueItems": true },
+        "mode": { "type": "string", "enum": ["replace", "add", "remove"], "default": "replace" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+    "objectTransform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "ids"],
+      "properties": {
+        "cmd": { "const": "object.transform" },
+        "ids": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "minItems": 1, "uniqueItems": true },
+        "translate": { "$ref": "#/$defs/point3" },
+        "rotate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["axis", "degrees"],
+          "properties": {
+            "axis": { "type": "string", "enum": ["x", "y", "z"] },
+            "origin": { "$ref": "#/$defs/point3" },
+            "degrees": { "type": "number" }
+          }
+        },
+        "meta": { "$ref": "#/$defs/meta" }
+      },
+      "anyOf": [{ "required": ["translate"] }, { "required": ["rotate"] }]
+    },
+    "materialAssign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmd", "ids", "material"],
+      "properties": {
+        "cmd": { "const": "material.assign" },
+        "ids": { "type": "array", "items": { "$ref": "#/$defs/objectId" }, "minItems": 1, "uniqueItems": true },
+        "material": { "$ref": "#/$defs/materialId" },
+        "meta": { "$ref": "#/$defs/meta" }
+      }
+    }
+  }
+}

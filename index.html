@@ -7,1255 +7,203 @@
   <meta name="apple-mobile-web-app-title" content="DrawVision">
   <meta name="theme-color" content="#151719">
   <link rel="manifest" href="manifest.webmanifest">
-  <title>DrawVision CAD Prototype</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #151719;
-      --panel: #202429;
-      --panel-2: #292f35;
-      --line: #3b444d;
-      --text: #f1f4f7;
-      --muted: #a8b0b8;
-      --accent: #24b47e;
-      --accent-2: #e1b955;
-      --danger: #e45d5d;
-      --blue: #5aa8ff;
-      --radius: 8px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100svh;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-    }
-
-    button, input, select {
-      font: inherit;
-      color: inherit;
-    }
-
-    .app {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      height: 100svh;
-      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    }
-
-    .topbar {
-      display: grid;
-      grid-template-columns: 72px 1fr 40px;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--line);
-      background: #111416;
-    }
-
-    .icon-btn {
-      display: grid;
-      place-items: center;
-      width: 40px;
-      height: 40px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-    }
-
-    .menu-btn {
-      width: 72px;
-      padding: 0 10px;
-      font-weight: 800;
-    }
-
-    .title {
-      min-width: 0;
-      text-align: center;
-      font-weight: 700;
-      letter-spacing: 0;
-    }
-
-    .subtitle {
-      display: block;
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .workspace {
-      position: relative;
-      min-height: 0;
-      background:
-        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
-        #171a1d;
-      background-size: 24px 24px;
-      touch-action: none;
-    }
-
-    svg {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .axis,
-    .view-pad {
-      position: absolute;
-      display: grid;
-      gap: 5px;
-    }
-
-    .axis {
-      right: 10px;
-      bottom: 72px;
-      grid-template-columns: repeat(3, 34px);
-    }
-
-    .view-pad {
-      right: 10px;
-      top: 10px;
-      grid-template-columns: repeat(3, 42px);
-      z-index: 2;
-    }
-
-    .axis button,
-    .view-pad button,
-    .chip {
-      min-height: 34px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(32, 36, 41, .92);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .axis button.active,
-    .view-pad button.active {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .bottom {
-      border-top: 1px solid var(--line);
-      background: #111416;
-    }
-
-    .command {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 8px 10px;
-    }
-
-    .command input {
-      width: 100%;
-      min-height: 42px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0 12px;
-      background: var(--panel);
-      outline: none;
-    }
-
-    .primary {
-      min-width: 62px;
-      border: 0;
-      border-radius: 8px;
-      background: var(--accent);
-      color: #071611;
-      font-weight: 800;
-    }
-
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      border-top: 1px solid var(--line);
-    }
-
-    .tab {
-      min-height: 52px;
-      border: 0;
-      border-right: 1px solid var(--line);
-      background: #15191d;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .tab.active {
-      color: var(--text);
-      background: var(--panel);
-      box-shadow: inset 0 3px 0 var(--accent);
-    }
-
-    .drawer {
-      position: absolute;
-      inset: auto 0 0 0;
-      max-height: min(58svh, 480px);
-      border-top: 1px solid var(--line);
-      background: rgba(21, 23, 25, .98);
-      transform: translateY(100%);
-      transition: transform .18s ease;
-      z-index: 5;
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
-
-    .drawer.open { transform: translateY(0); }
-
-    .drawer-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .drawer-head h2 {
-      margin: 0;
-      font-size: 16px;
-    }
-
-    .drawer-body {
-      overflow: auto;
-      padding: 12px;
-    }
-
-    .tool-popup,
-    .file-popup {
-      position: absolute;
-      inset: 72px 10px auto 10px;
-      max-height: min(68svh, 520px);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(17, 20, 22, .98);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, .42);
-      z-index: 8;
-      overflow: hidden;
-      display: none;
-    }
-
-    .tool-popup.open,
-    .file-popup.open {
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
-
-    .popup-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-      background: #15191d;
-    }
-
-    .popup-head h2 {
-      margin: 0;
-      font-size: 15px;
-    }
-
-    .popup-body {
-      overflow: auto;
-      padding: 12px;
-    }
-
-    .popup-section {
-      margin-bottom: 14px;
-    }
-
-    .popup-section h3 {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .tool {
-      min-height: 54px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      text-align: left;
-      padding: 8px 10px;
-      font-weight: 700;
-    }
-
-    .tool span {
-      display: block;
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 10px;
-      min-height: 48px;
-      padding: 8px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      margin-bottom: 8px;
-    }
-
-    .swatch {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      border: 1px solid rgba(255,255,255,.28);
-    }
-
-    .name {
-      min-width: 0;
-      font-size: 14px;
-      font-weight: 750;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 2px;
-    }
-
-    .pill {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 5px 8px;
-      color: var(--muted);
-      font-size: 11px;
-      background: #15191d;
-    }
-
-    .properties {
-      display: grid;
-      gap: 10px;
-    }
-
-    .field {
-      display: grid;
-      gap: 5px;
-    }
-
-    .field label {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .field input,
-    .field select {
-      width: 100%;
-      min-height: 40px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0 10px;
-      background: var(--panel);
-    }
-
-    .hud {
-      position: absolute;
-      left: 10px;
-      top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      max-width: calc(100% - 20px);
-      pointer-events: none;
-    }
-
-    .hud .chip {
-      display: inline-grid;
-      place-items: center;
-      padding: 0 9px;
-      color: var(--muted);
-    }
-
-    .selected {
-      filter: drop-shadow(0 0 7px rgba(36,180,126,.9));
-    }
-
-    .snap-marker {
-      fill: none;
-      stroke: var(--accent-2);
-      stroke-width: 2;
-      pointer-events: none;
-    }
-
-    .snap-text {
-      fill: var(--accent-2);
-      font-size: 11px;
-      font-weight: 800;
-      pointer-events: none;
-    }
-
-    .grid-major {
-      stroke: rgba(255, 255, 255, .22);
-      stroke-width: 1.2;
-      pointer-events: none;
-    }
-
-    .grid-minor {
-      stroke: rgba(255, 255, 255, .08);
-      stroke-width: .75;
-      pointer-events: none;
-    }
-
-    .grid-axis-x {
-      stroke: rgba(228, 93, 93, .78);
-      stroke-width: 1.5;
-      pointer-events: none;
-    }
-
-    .grid-axis-y {
-      stroke: rgba(90, 168, 255, .78);
-      stroke-width: 1.5;
-      pointer-events: none;
-    }
-
-    .grid-label {
-      fill: var(--muted);
-      font-size: 9px;
-      font-weight: 800;
-      pointer-events: none;
-    }
-
-    .view-label {
-      fill: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-anchor: middle;
-      text-transform: uppercase;
-    }
-
-    .credit {
-      position: absolute;
-      left: 10px;
-      right: 118px;
-      bottom: 74px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.35;
-      pointer-events: none;
-    }
-
-    @media (min-width: 820px) {
-      .app {
-        grid-template-columns: 280px 1fr 320px;
-        grid-template-rows: auto 1fr auto;
-      }
-
-      .topbar,
-      .bottom {
-        grid-column: 1 / -1;
-      }
-
-      .drawer {
-        position: static;
-        transform: none;
-        max-height: none;
-        border-top: 0;
-        border-right: 1px solid var(--line);
-      }
-
-      .drawer:not(.open) { display: grid; }
-
-      .workspace { grid-column: 2; }
-
-      .view-pad {
-        grid-template-columns: repeat(2, 44px);
-      }
-
-      .tool-popup {
-        left: 300px;
-        right: 340px;
-      }
-
-      .file-popup {
-        left: 10px;
-        right: auto;
-        width: 280px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
+  <title>DrawVision</title>
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <button class="icon-btn menu-btn" id="fileBtn" aria-label="Open file menu">File</button>
-      <div class="title">DrawVision <span class="subtitle" id="status">Remembering DrawVision by Bob Loh</span></div>
-      <button class="icon-btn" id="saveBtn" aria-label="Save model">⌁</button>
+  <main class="app-shell">
+    <header class="menu-bar">
+      <button data-menu="file">File</button>
+      <button data-menu="edit">Edit</button>
+      <button data-menu="view">View</button>
+      <button data-menu="draw">Draw</button>
+      <button data-menu="model">Model</button>
+      <button data-menu="tools">Tools</button>
+      <button data-menu="export">Export</button>
+      <button data-menu="window">Window</button>
+      <button data-menu="system">System</button>
+      <div class="brand">DrawVision <span id="status">Paper 1:1 / Virtual 1:100</span></div>
+      <div class="save-pill" id="saveStatus">Saved locally</div>
     </header>
-
-    <section class="workspace" id="workspace" aria-label="Model viewport">
-      <div class="hud" id="hud"></div>
-      <div class="credit">Disclaimer by WQai: remembering DrawVision by Bob Loh.</div>
-      <div class="file-popup" id="filePopup" aria-label="File menu">
-        <div class="popup-head">
-          <h2>File</h2>
-          <button class="icon-btn" id="closeFilePopup" aria-label="Close file menu">×</button>
+    <section class="home-screen" id="homeScreen" aria-label="DrawVision home screen">
+      <div class="home-card">
+        <div class="home-copy">
+          <p class="eyebrow">drawVision by HOK ATG</p>
+          <h1>Sketch-to-insight design workspace.</h1>
+          <p>Capture early ideas, clean up sketches, convert marks into structured geometry, generate rapid diagrams, and keep commands, measurements, analytics, and presentation output connected from the first stroke.</p>
+          <div class="home-actions">
+            <button data-command="file new">New Model</button>
+            <button data-command="file open">Open JSON</button>
+            <button data-command="home close">Continue Current</button>
+            <button data-command="app settings">App Settings</button>
+          </div>
+          <div class="capability-strip">
+            <span>Sketch-first</span>
+            <span>Vision-assisted</span>
+            <span>Rapid visualization</span>
+            <span>Analytics</span>
+            <span>Interoperability</span>
+            <span>Presentation-ready</span>
+          </div>
+          <div class="recent-list" id="recentList"></div>
         </div>
-        <div class="popup-body" id="filePopupBody"></div>
-      </div>
-      <input id="openFileInput" type="file" accept="application/json,.json" hidden>
-      <svg viewBox="0 0 390 620" role="img" aria-label="CAD canvas">
-        <g id="workingGrid"></g>
-        <text x="195" y="28" class="view-label" id="viewLabel">TOP</text>
-        <g id="model"></g>
-        <g id="snapLayer"></g>
-      </svg>
-      <div class="view-pad" id="viewPad" aria-label="View tools">
-        <button data-view="north">N</button>
-        <button data-view="top">Top</button>
-        <button data-view="south">S</button>
-        <button data-view="west">W</button>
-        <button data-view="pv">PV</button>
-        <button data-view="east">E</button>
-      </div>
-      <div class="tool-popup" id="creationPopup" aria-label="Creation tools popup">
-        <div class="popup-head">
-          <h2>Create Geometry</h2>
-          <button class="icon-btn" id="closeCreationPopup" aria-label="Close creation tools">×</button>
+        <div class="startup-map" aria-label="DrawVision startup interface map">
+          <div class="mock-title">Untitled - DrawVision Web</div>
+          <div class="mock-menu">File&nbsp;&nbsp;Edit&nbsp;&nbsp;View&nbsp;&nbsp;Draw&nbsp;&nbsp;Tools&nbsp;&nbsp;Window&nbsp;&nbsp;Help</div>
+          <div class="mock-top-tools">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-left-tools">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-viewport">
+            <div class="mock-sky"></div>
+            <div class="mock-ground"></div>
+            <div class="mock-axis x"></div>
+            <div class="mock-axis y"></div>
+            <div class="mock-axis z"></div>
+            <div class="mock-person"></div>
+            <div class="mock-dog"></div>
+          </div>
+          <div class="mock-tray">
+            <strong>Default Tray</strong>
+            <span>Entity Info</span>
+            <span>Materials</span>
+            <span>Components</span>
+            <span>Styles</span>
+            <span>Tags / Layers</span>
+            <span>Scenes</span>
+            <span>Instructor</span>
+          </div>
+          <div class="mock-status">DV&gt; line . &nbsp;&nbsp; Status: grid snap on</div>
+          <div class="mock-measure">Measurements&nbsp;&nbsp;<b>10'</b></div>
+          <div class="callout c1">1</div>
+          <div class="callout c2">2</div>
+          <div class="callout c3">3</div>
+          <div class="callout c4">4</div>
+          <div class="callout c5">5</div>
+          <div class="callout c6">6</div>
+          <div class="callout-note n1">Sketch + model space</div>
+          <div class="callout-note n2">Pen / touch / tools</div>
+          <div class="callout-note n3">Project workflow</div>
+          <div class="callout-note n4">Interpret / visualize</div>
+          <div class="callout-note n5">Command + measurements</div>
+          <div class="callout-note n6">Insight panels</div>
         </div>
-        <div class="popup-body" id="creationPopupBody"></div>
       </div>
-      <div class="axis">
-        <button data-axis="x">X</button>
-        <button data-axis="y">Y</button>
-        <button data-axis="z">Z</button>
+    </section>
+    <section class="menu-panel" id="menuPanel" aria-label="Command menu"></section>
+    <section class="context-menu" id="contextMenu" aria-label="Element context menu"></section>
+    <section class="settings-dialog" id="settingsDialog" aria-label="App settings">
+      <div class="settings-card">
+        <div class="settings-head">
+          <div>
+            <p class="eyebrow">App Settings</p>
+            <h2>DrawVision Web Preferences</h2>
+          </div>
+          <button data-settings-close>Close</button>
+        </div>
+        <div class="settings-grid">
+          <fieldset>
+            <legend>General</legend>
+            <label><input type="checkbox" id="settingAutosave"> Autosave local model</label>
+            <label>Autosave interval <input type="number" id="settingAutosaveInterval" min="5" max="300" step="5"></label>
+            <label>Template
+              <select id="settingTemplate">
+                <option value="architectural">Architectural feet</option>
+                <option value="metric">Metric meters</option>
+                <option value="presentation">Presentation graphics</option>
+              </select>
+            </label>
+            <label>Grid feet/meters <input type="number" id="settingGridFeet" min="5" max="200" step="1"></label>
+            <label>Snap spacing <input type="number" id="settingGridSnap" min="0.125" max="10" step="0.125"></label>
+          </fieldset>
+          <fieldset>
+            <legend>Accessibility</legend>
+            <label>X axis color <input type="color" id="settingAxisX"></label>
+            <label>Y axis color <input type="color" id="settingAxisY"></label>
+            <label>Inference color <input type="color" id="settingInference"></label>
+            <label><input type="checkbox" id="settingHighContrast"> High contrast model display</label>
+          </fieldset>
+          <fieldset>
+            <legend>Navigation</legend>
+            <label>Device
+              <select id="settingInputDevice">
+                <option value="mouse">Mouse</option>
+                <option value="trackpad">Trackpad</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="settingInvertZoom"> Invert zoom</label>
+            <label><input type="checkbox" id="settingInvertPan"> Invert pan</label>
+            <label>Zoom sensitivity <input type="range" id="settingZoomSensitivity" min="0.5" max="2" step="0.1"></label>
+            <label>Pan sensitivity <input type="range" id="settingPanSensitivity" min="0.5" max="2" step="0.1"></label>
+            <label>Orbit sensitivity <input type="range" id="settingOrbitSensitivity" min="0.5" max="2" step="0.1"></label>
+          </fieldset>
+          <fieldset>
+            <legend>Memory</legend>
+            <div class="memory-meter"><span id="memoryMeter"></span></div>
+            <p id="memoryText">Memory estimate pending.</p>
+            <label><input type="checkbox" id="settingMemoryWarnings"> Memory warnings</label>
+            <label>Warning threshold % <input type="number" id="settingMemoryThreshold" min="20" max="95" step="5"></label>
+            <label><input type="checkbox" id="settingClearUndo"> Clear undo during optimize</label>
+            <button data-command="optimize memory">Optimize Now</button>
+          </fieldset>
+        </div>
+        <div class="settings-actions">
+          <button data-command="settings reset">Reset All</button>
+          <button data-command="settings apply">Apply Settings</button>
+        </div>
       </div>
     </section>
 
-    <aside class="drawer open" id="drawer">
-      <div class="drawer-head">
-        <h2 id="drawerTitle">Create</h2>
-        <button class="icon-btn" id="closeDrawer" aria-label="Close panel">×</button>
+    <aside class="large-tool-set" id="toolRail" aria-label="Large tool set"></aside>
+
+    <section class="viewport" id="viewport" aria-label="Model viewport">
+      <div class="heads-up" id="hud"></div>
+      <svg id="canvas" viewBox="0 0 720 540" role="img" aria-label="DrawVision canvas">
+        <g id="gridLayer"></g>
+        <g id="modelLayer"></g>
+        <g id="previewLayer"></g>
+      </svg>
+      <div class="view-palette" id="viewPalette"></div>
+      <div class="measurements">
+        <label for="measurementBox">Measurements</label>
+        <input id="measurementBox" value="Ready">
       </div>
-      <div class="drawer-body" id="drawerBody"></div>
+      <section class="command-window" id="commandWindow">
+        <div class="command-title">
+          <span>Command Prompt</span>
+          <button id="toggleCommand">Hide</button>
+        </div>
+        <pre id="commandHistory">DrawVision ready.
+Try: line, input poly, gen cir seg 36, distance from . to ., select in box, merge line to 0</pre>
+        <form id="promptForm" class="prompt-form">
+          <span>DV&gt;</span>
+          <input id="promptInput" autocomplete="off" aria-label="Command prompt">
+          <button>Run</button>
+        </form>
+      </section>
+    </section>
+
+    <aside class="tray" id="tray">
+      <div class="tray-tabs">
+        <button data-tray="entity" class="active">Entity</button>
+        <button data-tray="layers">Layers</button>
+        <button data-tray="scenes">Scenes</button>
+        <button data-tray="outliner">Outliner</button>
+      </div>
+      <div id="trayBody"></div>
     </aside>
 
-    <footer class="bottom">
-      <form class="command" id="commandForm">
-        <input id="commandInput" autocomplete="off" value="select layer walls set color red" aria-label="Command input">
-        <button class="primary">Run</button>
+    <footer class="bottom-bar">
+      <form id="quickCommand" class="quick-command">
+        <input id="commandInput" autocomplete="off" value="line" aria-label="Quick command">
+        <button>Run</button>
       </form>
-      <nav class="tabs" aria-label="CAD categories">
-        <button class="tab active" data-panel="think">Think</button>
-        <button class="tab" data-panel="create">Create</button>
-        <button class="tab" data-panel="select">Select</button>
-        <button class="tab" data-panel="edit">Edit</button>
-        <button class="tab" data-panel="view">View</button>
-        <button class="tab" data-panel="layers">Layers</button>
-        <button class="tab" data-panel="props">Props</button>
-      </nav>
     </footer>
   </main>
 
-  <script>
-    const state = {
-      activePanel: 'think',
-      axisLock: null,
-      viewMode: 'top',
-      selectionMode: 'tap',
-      snapMode: 'grid',
-      gridSize: 16,
-      gridFeet: 20,
-      gridOrigin: { x: 35, y: 92 },
-      lastSnap: null,
-      runningSnaps: ['endpoint', 'midpoint', 'center'],
-      activeReference: 'from point',
-      selected: ['wall_north'],
-      layers: [
-        { id: 'walls', name: 'Walls', color: '#d95c4f', visible: true, locked: false },
-        { id: 'floor', name: 'Floor', color: '#d6aa42', visible: true, locked: false },
-        { id: 'guides', name: 'Guides', color: '#5aa8ff', visible: true, locked: true }
-      ],
-      groups: [
-        { id: 'shell', name: 'Exterior Shell', count: 3 },
-        { id: 'north', name: 'North Wall', count: 1 },
-        { id: 'openings', name: 'Openings', count: 0 }
-      ],
-      recipes: [
-        {
-          name: 'Brick room',
-          natural: 'Make a 12 by 16 foot brick room with 10 foot walls.',
-          command: 'poly 0,0,0 12,0,0 12,16,0 0,16,0 close | extrude z 10 | set layer walls material brick | group selected as room_01'
-        },
-        {
-          name: 'Revolved profile',
-          natural: 'Make a stretched 24 node circle and revolve it around the Z axis.',
-          command: 'circle center 0,0,0 radius 2 nodes 24 | select nodes top | move selected z 4 | revolve selected around z 360 segments 24'
-        },
-        {
-          name: 'Move by reference',
-          natural: 'Move selected objects from the endpoint of one line to the midpoint of another.',
-          command: 'move selected from endpoint line_1 to midpoint line_2 lock xy'
-        }
-      ],
-      objects: [
-        { id: 'wall_north', type: 'line', layer: 'walls', group: 'North Wall', color: '#d95c4f', points: [[85,180],[305,180]], weight: 5, attrs: { material: 'brick', height: '10', phase: 'new' } },
-        { id: 'wall_east', type: 'line', layer: 'walls', group: 'Exterior Shell', color: '#d95c4f', points: [[305,180],[305,370]], weight: 5, attrs: { material: 'brick', height: '10', phase: 'new' } },
-        { id: 'floor_loop', type: 'poly', layer: 'floor', group: 'Exterior Shell', color: '#d6aa42', fill: 'rgba(214,170,66,.22)', points: [[85,180],[305,180],[305,370],[85,370]], weight: 2, attrs: { material: 'concrete', closed: 'true' } },
-        { id: 'circle_24', type: 'circle24', layer: 'guides', group: 'Guides', color: '#5aa8ff', cx: 195, cy: 275, r: 58, weight: 2, attrs: { nodes: '24', role: 'profile' } }
-      ]
-    };
-
-    const creationTools = [
-      {
-        section: '2D Drafting',
-        tools: [
-          ['Point', 'point x,y,0 snap grid'],
-          ['Line', 'line from point to point'],
-          ['Polyline', 'polyline points close optional'],
-          ['Rectangle', 'rect from corner to corner'],
-          ['Circle 24', 'circle center radius nodes 24'],
-          ['Arc', 'arc start mid end'],
-          ['Text', 'text at point value']
-        ]
-      },
-      {
-        section: 'Faces and Profiles',
-        tools: [
-          ['Face', 'face from closed loop'],
-          ['Profile', 'profile from selected edges'],
-          ['Offset', 'offset selected distance'],
-          ['Shell', 'shell selected thickness'],
-          ['Fill Loop', 'find loops | fill selected']
-        ]
-      },
-      {
-        section: '3D Creation',
-        tools: [
-          ['Extrude', 'extrude selected z height'],
-          ['Revolve', 'revolve selected around z 360 segments 24'],
-          ['Loft', 'loft selected profiles'],
-          ['Boolean Add', 'boolean add selected'],
-          ['Boolean Cut', 'boolean subtract selected'],
-          ['Section', 'section selected plane xy']
-        ]
-      },
-      {
-        section: 'Reusable Objects',
-        tools: [
-          ['Group', 'group selected as name'],
-          ['Component', 'component selected as name'],
-          ['Block', 'block selected as name'],
-          ['Array', 'array selected rows cols spacing']
-        ]
-      }
-    ];
-
-    const fileTools = [
-      ['New', 'file new', 'start a clean model'],
-      ['Open', 'file open', 'load a DrawVision JSON file'],
-      ['Save', 'file save', 'save current model locally'],
-      ['Save As', 'file save as', 'save locally with a project name'],
-      ['Export JSON', 'file export json', 'download model JSON'],
-      ['Import JSON', 'file import json', 'merge/load model JSON'],
-      ['Clear Local Save', 'file clear local', 'remove browser local save']
-    ];
-
-    const panels = {
-      create: [
-        ['Open Popup', 'create popup'],
-        ['Point', 'point x,y,0 snap grid'],
-        ['Line', 'line from point to point'],
-        ['Rectangle', 'rect from corner to corner'],
-        ['Circle 24', 'circle center radius nodes 24'],
-        ['Extrude', 'extrude selected z height']
-      ],
-      edit: [
-        ['Select', 'tap, window, by property'],
-        ['Move', 'from point to point'],
-        ['Copy', 'duplicate by reference'],
-        ['Rotate', 'around axis or point'],
-        ['Stretch', 'move nodes and edges'],
-        ['Merge', 'join lines or loops'],
-        ['Extrude', 'closed loop to volume'],
-        ['Trim', 'cut against references'],
-        ['Grid Snap', 'snap grid'],
-        ['Free Snap', 'snap free'],
-        ['Snap', 'endpoint midpoint center'],
-        ['Reference', 'from point to point']
-      ],
-      select: [
-        ['Tap Select', 'select mode tap'],
-        ['Window', 'select mode window'],
-        ['Crossing', 'select mode crossing'],
-        ['Grid Snap', 'snap grid'],
-        ['Free Pick', 'snap free'],
-        ['Select All', 'select all'],
-        ['Clear', 'select none'],
-        ['Invert', 'select invert'],
-        ['Walls', 'select layer walls'],
-        ['Floor', 'select layer floor'],
-        ['Guides', 'select layer guides'],
-        ['Lines', 'select type line']
-      ],
-      view: [
-        ['North', 'view north'],
-        ['South', 'view south'],
-        ['East', 'view east'],
-        ['West', 'view west'],
-        ['PV', 'view pv'],
-        ['Top', 'view top']
-      ]
-    };
-
-    const model = document.getElementById('model');
-    const drawer = document.getElementById('drawer');
-    const drawerBody = document.getElementById('drawerBody');
-    const drawerTitle = document.getElementById('drawerTitle');
-    const status = document.getElementById('status');
-    const hud = document.getElementById('hud');
-    const viewLabel = document.getElementById('viewLabel');
-    const snapLayer = document.getElementById('snapLayer');
-    const workingGrid = document.getElementById('workingGrid');
-    const creationPopup = document.getElementById('creationPopup');
-    const creationPopupBody = document.getElementById('creationPopupBody');
-    const filePopup = document.getElementById('filePopup');
-    const filePopupBody = document.getElementById('filePopupBody');
-    const openFileInput = document.getElementById('openFileInput');
-
-    function layerById(id) {
-      return state.layers.find(layer => layer.id === id);
-    }
-
-    function renderModel() {
-      renderWorkingGrid();
-      model.innerHTML = '';
-      model.setAttribute('transform', viewTransform());
-      state.objects.forEach(object => {
-        const layer = layerById(object.layer);
-        if (!layer || !layer.visible) return;
-
-        let node;
-        if (object.type === 'poly') {
-          node = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-          node.setAttribute('points', object.points.map(point => point.join(',')).join(' '));
-          node.setAttribute('fill', object.fill || 'transparent');
-          node.setAttribute('stroke', object.color);
-          node.setAttribute('stroke-width', object.weight);
-        } else if (object.type === 'circle24') {
-          const points = Array.from({ length: 24 }, (_, index) => {
-            const angle = (Math.PI * 2 * index) / 24;
-            return [object.cx + Math.cos(angle) * object.r, object.cy + Math.sin(angle) * object.r];
-          });
-          node = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-          node.setAttribute('points', points.map(point => point.join(',')).join(' '));
-          node.setAttribute('fill', 'transparent');
-          node.setAttribute('stroke', object.color);
-          node.setAttribute('stroke-width', object.weight);
-          points.forEach((point, index) => {
-            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            dot.setAttribute('cx', point[0]);
-            dot.setAttribute('cy', point[1]);
-            dot.setAttribute('r', index % 6 === 0 ? 3.5 : 2.25);
-            dot.setAttribute('fill', object.color);
-            model.appendChild(dot);
-          });
-        } else {
-          node = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          node.setAttribute('x1', object.points[0][0]);
-          node.setAttribute('y1', object.points[0][1]);
-          node.setAttribute('x2', object.points[1][0]);
-          node.setAttribute('y2', object.points[1][1]);
-          node.setAttribute('stroke', object.color);
-          node.setAttribute('stroke-width', object.weight);
-          node.setAttribute('stroke-linecap', 'round');
-        }
-
-        node.dataset.id = object.id;
-        node.classList.toggle('selected', state.selected.includes(object.id));
-        node.addEventListener('click', () => {
-          state.selected = [object.id];
-          renderAll();
-        });
-        model.appendChild(node);
-      });
-      renderSnapMarker();
-    }
-
-    function renderWorkingGrid() {
-      const { x, y } = state.gridOrigin;
-      const size = state.gridSize;
-      const feet = state.gridFeet;
-      const edge = feet * size;
-      const lines = [];
-      for (let index = 0; index <= feet; index += 1) {
-        const pos = index * size;
-        const lineClass = index % 5 === 0 ? 'grid-major' : 'grid-minor';
-        lines.push(`<line class="${lineClass}" x1="${x + pos}" y1="${y}" x2="${x + pos}" y2="${y + edge}"></line>`);
-        lines.push(`<line class="${lineClass}" x1="${x}" y1="${y + pos}" x2="${x + edge}" y2="${y + pos}"></line>`);
-        if (index % 5 === 0 || index === feet) {
-          lines.push(`<text class="grid-label" x="${x + pos - 5}" y="${y + edge + 16}">${index}'</text>`);
-          lines.push(`<text class="grid-label" x="${x - 24}" y="${y + edge - pos + 3}">${index}'</text>`);
-        }
-      }
-      lines.push(`<line class="grid-axis-x" x1="${x}" y1="${y + edge}" x2="${x + edge}" y2="${y + edge}"></line>`);
-      lines.push(`<line class="grid-axis-y" x1="${x}" y1="${y}" x2="${x}" y2="${y + edge}"></line>`);
-      lines.push(`<text class="grid-label" x="${x}" y="${y - 12}">20' x 20' working grid - 1' snap</text>`);
-      workingGrid.innerHTML = lines.join('');
-    }
-
-    function renderSnapMarker() {
-      snapLayer.innerHTML = '';
-      if (!state.lastSnap) return;
-      const { x, y, fx, fy } = state.lastSnap;
-      snapLayer.innerHTML = `
-        <path class="snap-marker" d="M ${x - 8} ${y} L ${x + 8} ${y} M ${x} ${y - 8} L ${x} ${y + 8}"></path>
-        <circle class="snap-marker" cx="${x}" cy="${y}" r="10"></circle>
-        <text class="snap-text" x="${x + 12}" y="${y - 12}">${fx}',${fy}'</text>
-      `;
-    }
-
-    function viewTransform() {
-      if (state.viewMode === 'north') return 'translate(0 18) scale(1 .82)';
-      if (state.viewMode === 'south') return 'rotate(180 195 310) translate(0 18) scale(1 .82)';
-      if (state.viewMode === 'east') return 'rotate(90 195 310) translate(0 18) scale(1 .82)';
-      if (state.viewMode === 'west') return 'rotate(-90 195 310) translate(0 18) scale(1 .82)';
-      if (state.viewMode === 'pv') return 'translate(32 -18) skewX(-12) scale(.88 .76)';
-      return '';
-    }
-
-    function renderHud() {
-      const selectedText = `${state.selected.length} selected`;
-      const axisText = state.axisLock ? `Lock ${state.axisLock.toUpperCase()}` : 'Free XYZ';
-      hud.innerHTML = [
-        selectedText,
-        axisText,
-        `Grid ${state.gridFeet}'x${state.gridFeet}' @ 1'`,
-        `Snap ${state.snapMode}`,
-        `Snap ${state.runningSnaps.join('/')}`,
-        `Select ${state.selectionMode}`,
-        state.activeReference,
-        `View ${state.viewMode.toUpperCase()}`
-      ].map(text => `<span class="chip">${text}</span>`).join('');
-      status.textContent = `${state.objects.length} objects - ${selectedText}`;
-      viewLabel.textContent = state.viewMode === 'pv' ? 'PERSPECTIVE' : state.viewMode.toUpperCase();
-    }
-
-    function commandButton(label, hint) {
-      return `<button class="tool" data-command="${hint}">${label}<span>${hint}</span></button>`;
-    }
-
-    function renderCreationPopup() {
-      creationPopupBody.innerHTML = creationTools.map(section => `
-        <section class="popup-section">
-          <h3>${section.section}</h3>
-          <div class="grid">
-            ${section.tools.map(item => commandButton(item[0], item[1])).join('')}
-          </div>
-        </section>
-      `).join('');
-    }
-
-    function renderFilePopup() {
-      filePopupBody.innerHTML = `<div class="grid">${fileTools.map(item => `
-        <button class="tool" data-file-command="${item[1]}">${item[0]}<span>${item[2]}</span></button>
-      `).join('')}</div>`;
-    }
-
-    function openCreationPopup() {
-      renderCreationPopup();
-      closeFilePopup();
-      creationPopup.classList.add('open');
-    }
-
-    function closeCreationPopup() {
-      creationPopup.classList.remove('open');
-    }
-
-    function openFilePopup() {
-      renderFilePopup();
-      closeCreationPopup();
-      filePopup.classList.add('open');
-    }
-
-    function closeFilePopup() {
-      filePopup.classList.remove('open');
-    }
-
-    function modelPayload(name = 'DrawVision model') {
-      return {
-        name,
-        savedAt: new Date().toISOString(),
-        version: 1,
-        viewMode: state.viewMode,
-        layers: state.layers,
-        groups: state.groups,
-        objects: state.objects
-      };
-    }
-
-    function saveModel(name = 'DrawVision model') {
-      localStorage.setItem('drawvision-model', JSON.stringify(modelPayload(name)));
-      status.textContent = `Saved ${name}`;
-    }
-
-    function loadModelPayload(payload) {
-      if (!payload || !Array.isArray(payload.objects)) return;
-      state.layers = Array.isArray(payload.layers) ? payload.layers : state.layers;
-      state.groups = Array.isArray(payload.groups) ? payload.groups : state.groups;
-      state.objects = payload.objects;
-      state.selected = [];
-      state.lastSnap = null;
-      if (payload.viewMode) state.viewMode = payload.viewMode;
-      status.textContent = `Opened ${payload.name || 'model'}`;
-      renderAll();
-    }
-
-    function downloadModel(name = 'drawvision-model') {
-      const blob = new Blob([JSON.stringify(modelPayload(name), null, 2)], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }
-
-    function runFileCommand(command) {
-      if (command === 'file new') {
-        state.objects = [];
-        state.groups = [];
-        state.selected = [];
-        state.lastSnap = null;
-        status.textContent = 'New blank model';
-        renderAll();
-      }
-      if (command === 'file open' || command === 'file import json') {
-        openFileInput.click();
-      }
-      if (command === 'file save') {
-        saveModel();
-      }
-      if (command === 'file save as') {
-        const name = prompt('Save as project name', 'DrawVision model') || 'DrawVision model';
-        saveModel(name);
-      }
-      if (command === 'file export json') {
-        downloadModel('drawvision-model');
-      }
-      if (command === 'file clear local') {
-        localStorage.removeItem('drawvision-model');
-        status.textContent = 'Local save cleared';
-      }
-      closeFilePopup();
-    }
-
-
-    function renderDrawer() {
-      drawerTitle.textContent = state.activePanel[0].toUpperCase() + state.activePanel.slice(1);
-
-      if (state.activePanel === 'layers') {
-        drawerBody.innerHTML = state.layers.map(layer => `
-          <div class="row">
-            <span class="swatch" style="background:${layer.color}"></span>
-            <div class="name">${layer.name}<div class="meta">${layer.visible ? 'visible' : 'hidden'} · ${layer.locked ? 'locked' : 'editable'}</div></div>
-            <button class="pill" data-layer="${layer.id}">${layer.visible ? 'Hide' : 'Show'}</button>
-          </div>
-        `).join('') + commandButton('New Layer', 'layer new name color');
-        return;
-      }
-
-      if (state.activePanel === 'groups') {
-        drawerBody.innerHTML = state.groups.map(group => `
-          <div class="row">
-            <span class="swatch" style="background:#24b47e"></span>
-            <div class="name">${group.name}<div class="meta">${group.count} objects</div></div>
-            <button class="pill" data-command="select group ${group.name}">Select</button>
-          </div>
-        `).join('') + commandButton('Group Selected', 'group selected as name');
-        return;
-      }
-
-      if (state.activePanel === 'think') {
-        drawerBody.innerHTML = `
-          <div class="properties">
-            <div class="field">
-              <label>Natural description</label>
-              <input id="naturalInput" value="${state.recipes[0].natural}">
-            </div>
-            <button class="tool" data-describe="true">Generate command chain<span>turn description into editable CAD steps</span></button>
-            ${state.recipes.map(recipe => `
-              <div class="row">
-                <span class="swatch" style="background:#24b47e"></span>
-                <div class="name">${recipe.name}<div class="meta">${recipe.command}</div></div>
-                <button class="pill" data-recipe="${recipe.name}">Use</button>
-              </div>
-            `).join('')}
-          </div>
-        `;
-        return;
-      }
-
-      if (state.activePanel === 'props') {
-        const object = state.objects.find(item => item.id === state.selected[0]) || state.objects[0];
-        drawerBody.innerHTML = `
-          <div class="properties">
-            <div class="field"><label>Object</label><input value="${object.id}"></div>
-            <div class="field"><label>Layer</label><select>${state.layers.map(layer => `<option ${layer.id === object.layer ? 'selected' : ''}>${layer.name}</option>`).join('')}</select></div>
-            <div class="field"><label>Line color</label><input value="${object.color}"></div>
-            <div class="field"><label>Fill / material</label><input value="${object.attrs.material || object.fill || ''}"></div>
-            <div class="field"><label>Attributes</label><input value="${Object.entries(object.attrs).map(([key, value]) => `${key}=${value}`).join(', ')}"></div>
-          </div>
-        `;
-        return;
-      }
-
-      drawerBody.innerHTML = `<div class="grid">${panels[state.activePanel].map(item => commandButton(item[0], item[1])).join('')}</div>`;
-    }
-
-    function selectBy(predicate) {
-      state.selected = state.objects.filter(predicate).map(object => object.id);
-    }
-
-    function setView(mode) {
-      state.viewMode = mode;
-    }
-
-    function runCommand(command) {
-      const text = command.trim().toLowerCase();
-      if (!text) return;
-      if (text.includes('create popup')) {
-        openCreationPopup();
-      }
-      if (text.includes('select all')) {
-        state.selected = state.objects.map(object => object.id);
-      }
-      if (text.includes('select none') || text.includes('clear selection')) {
-        state.selected = [];
-      }
-      if (text.includes('select invert')) {
-        state.selected = state.objects.filter(object => !state.selected.includes(object.id)).map(object => object.id);
-      }
-      if (text.includes('select layer walls')) {
-        selectBy(object => object.layer === 'walls');
-      }
-      if (text.includes('select layer floor')) {
-        selectBy(object => object.layer === 'floor');
-      }
-      if (text.includes('select layer guides')) {
-        selectBy(object => object.layer === 'guides');
-      }
-      if (text.includes('select type line')) {
-        selectBy(object => object.type === 'line');
-      }
-      if (text.includes('select mode tap')) {
-        state.selectionMode = 'tap';
-      }
-      if (text.includes('select mode window')) {
-        state.selectionMode = 'window';
-      }
-      if (text.includes('select mode crossing')) {
-        state.selectionMode = 'crossing';
-      }
-      if (text.includes('set color red')) {
-        state.objects.forEach(object => {
-          if (state.selected.includes(object.id)) object.color = '#e45d5d';
-        });
-      }
-      if (text.includes('set color blue')) {
-        state.objects.forEach(object => {
-          if (state.selected.includes(object.id)) object.color = '#5aa8ff';
-        });
-      }
-      if (text.includes('group selected')) {
-        state.groups.unshift({ id: `group_${Date.now()}`, name: 'Command Group', count: state.selected.length });
-      }
-      if (text.includes('move') && text.includes('z')) {
-        hud.insertAdjacentHTML('beforeend', '<span class="chip">Z move queued</span>');
-      }
-      if (text.includes('snap endpoint')) {
-        state.runningSnaps = ['endpoint'];
-      }
-      if (text.includes('snap midpoint')) {
-        state.runningSnaps = ['midpoint'];
-      }
-      if (text.includes('snap grid')) {
-        state.snapMode = 'grid';
-      }
-      if (text.includes('snap free') || text.includes('free pick')) {
-        state.snapMode = 'free';
-      }
-      if (text.includes('from endpoint')) {
-        state.activeReference = 'from endpoint';
-      }
-      if (text.includes('to midpoint')) {
-        state.activeReference = `${state.activeReference} to midpoint`;
-      }
-      ['north', 'south', 'east', 'west', 'pv', 'top'].forEach(mode => {
-        if (text.includes(`view ${mode}`)) setView(mode);
-      });
-      renderAll();
-    }
-
-    function svgPointFromEvent(event) {
-      const svg = event.currentTarget.querySelector('svg');
-      const point = svg.createSVGPoint();
-      point.x = event.clientX;
-      point.y = event.clientY;
-      return point.matrixTransform(svg.getScreenCTM().inverse());
-    }
-
-    function snapPoint(point) {
-      const { x, y } = state.gridOrigin;
-      const max = state.gridFeet;
-      if (state.snapMode !== 'grid') {
-        return { x: Math.round(point.x), y: Math.round(point.y), fx: '?', fy: '?' };
-      }
-      const fx = Math.max(0, Math.min(max, Math.round((point.x - x) / state.gridSize)));
-      const fy = Math.max(0, Math.min(max, Math.round((y + max * state.gridSize - point.y) / state.gridSize)));
-      return {
-        x: x + fx * state.gridSize,
-        y: y + (max - fy) * state.gridSize,
-        fx,
-        fy
-      };
-    }
-
-    function renderAll() {
-      renderModel();
-      renderHud();
-      renderDrawer();
-      document.querySelectorAll('.axis button').forEach(button => {
-        button.classList.toggle('active', state.axisLock === button.dataset.axis);
-      });
-      document.querySelectorAll('.view-pad button').forEach(button => {
-        button.classList.toggle('active', state.viewMode === button.dataset.view);
-      });
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.toggle('active', state.activePanel === tab.dataset.panel);
-      });
-    }
-
-    document.querySelector('.tabs').addEventListener('click', event => {
-      const tab = event.target.closest('.tab');
-      if (!tab) return;
-      state.activePanel = tab.dataset.panel;
-      drawer.classList.add('open');
-      if (state.activePanel === 'create') openCreationPopup();
-      renderAll();
-    });
-
-    drawerBody.addEventListener('click', event => {
-      const command = event.target.closest('[data-command]')?.dataset.command;
-      const layerId = event.target.closest('[data-layer]')?.dataset.layer;
-      const recipeName = event.target.closest('[data-recipe]')?.dataset.recipe;
-      const describe = event.target.closest('[data-describe]');
-      if (command) {
-        document.getElementById('commandInput').value = command;
-        if (command === 'create popup') openCreationPopup();
-      }
-      if (recipeName) {
-        const recipe = state.recipes.find(item => item.name === recipeName);
-        document.getElementById('commandInput').value = recipe.command;
-      }
-      if (describe) {
-        const value = document.getElementById('naturalInput').value.toLowerCase();
-        let commandChain = 'select all';
-        if (value.includes('room')) commandChain = state.recipes[0].command;
-        if (value.includes('circle') || value.includes('revolve')) commandChain = state.recipes[1].command;
-        if (value.includes('move') || value.includes('point')) commandChain = state.recipes[2].command;
-        document.getElementById('commandInput').value = commandChain;
-      }
-      if (layerId) {
-        const layer = layerById(layerId);
-        layer.visible = !layer.visible;
-        renderAll();
-      }
-    });
-
-    document.querySelector('.axis').addEventListener('click', event => {
-      const axis = event.target.dataset.axis;
-      if (!axis) return;
-      state.axisLock = state.axisLock === axis ? null : axis;
-      renderAll();
-    });
-
-    document.getElementById('viewPad').addEventListener('click', event => {
-      const view = event.target.dataset.view;
-      if (!view) return;
-      setView(view);
-      renderAll();
-    });
-
-    creationPopupBody.addEventListener('click', event => {
-      const command = event.target.closest('[data-command]')?.dataset.command;
-      if (!command) return;
-      document.getElementById('commandInput').value = command;
-      closeCreationPopup();
-    });
-
-    document.getElementById('closeCreationPopup').addEventListener('click', closeCreationPopup);
-
-    document.getElementById('workspace').addEventListener('pointerdown', event => {
-      if (event.target.closest('button')) return;
-      const point = snapPoint(svgPointFromEvent(event));
-      state.lastSnap = point;
-      document.getElementById('commandInput').value = `point ${point.fx}',${point.fy}',0 snap ${state.snapMode}`;
-      renderAll();
-    });
-
-    document.getElementById('commandForm').addEventListener('submit', event => {
-      event.preventDefault();
-      runCommand(document.getElementById('commandInput').value);
-    });
-
-    document.getElementById('fileBtn').addEventListener('click', openFilePopup);
-    document.getElementById('closeDrawer').addEventListener('click', () => drawer.classList.remove('open'));
-    document.getElementById('saveBtn').addEventListener('click', () => {
-      saveModel();
-    });
-
-    filePopupBody.addEventListener('click', event => {
-      const command = event.target.closest('[data-file-command]')?.dataset.fileCommand;
-      if (!command) return;
-      runFileCommand(command);
-    });
-
-    document.getElementById('closeFilePopup').addEventListener('click', closeFilePopup);
-
-    openFileInput.addEventListener('change', event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          loadModelPayload(JSON.parse(reader.result));
-        } catch (error) {
-          status.textContent = 'Open failed: invalid JSON';
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    });
-
-    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js');
-    }
-
-    renderAll();
-  </script>
+  <input id="openFileInput" type="file" accept="application/json,.json" hidden>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,10 @@
+{
+  "tasks": [
+    {
+      "id": "task_001",
+      "type": "wall.create",
+      "description": "Create a wall from structured architectural intent",
+      "depends_on": []
+    }
+  ]
+}

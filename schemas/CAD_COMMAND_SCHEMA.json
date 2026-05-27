@@ -1,0 +1,28 @@
+{
+  "commands": {
+    "wall.create": {
+      "required": ["cmd", "start", "end", "height", "thickness"],
+      "properties": {
+        "cmd": "wall.create",
+        "start": "vec3",
+        "end": "vec3",
+        "height": "number_mm",
+        "thickness": "number_mm",
+        "material": "string"
+      }
+    },
+    "cabinet.create": {
+      "required": ["cmd", "type", "width", "depth", "height", "position", "orientation"],
+      "properties": {
+        "cmd": "cabinet.create",
+        "type": "string",
+        "width": "number_mm",
+        "depth": "number_mm",
+        "height": "number_mm",
+        "position": "vec3",
+        "orientation": "degrees",
+        "material": "string"
+      }
+    }
+  }
+}

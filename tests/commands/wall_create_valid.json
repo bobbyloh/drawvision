@@ -1,0 +1,8 @@
+{
+  "cmd": "wall.create",
+  "start": [0, 0, 0],
+  "end": [5000, 0, 0],
+  "height": 3200,
+  "thickness": 200,
+  "material": "default_wall"
+}
