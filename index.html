@@ -11,15 +11,32 @@
   <title>DrawVision</title>
 </head>
 <body>
-<div id="dvJsonCommandPanel" style="position:fixed;top:12px;left:12px;right:12px;z-index:9999;background:#111827;color:white;padding:12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:system-ui;">
-  <div style="font-weight:700;margin-bottom:8px;">DrawVision JSON Command Console</div>
-  <textarea id="dvJsonCommandInput" rows="3" style="width:100%;box-sizing:border-box;border-radius:8px;padding:8px;font-family:monospace;" placeholder='Paste JSON command here, e.g. {"cmd":"room.detect",...}'></textarea>
-  <div style="display:flex;gap:8px;margin-top:8px;">
-    <button id="dvRunJsonCommand" style="padding:8px 14px;border-radius:8px;border:0;cursor:pointer;">Run JSON Command</button>
-    <button id="dvFillRoomCommand" style="padding:8px 14px;border-radius:8px;border:0;cursor:pointer;">Example Room</button>
-    <button id="dvFillKitchenCommand" style="padding:8px 14px;border-radius:8px;border:0;cursor:pointer;">Example Kitchen</button>
+<div id="dvJsonCommandPanel" class="dv-command-console">
+  <div class="dv-console-header">
+    <div>
+      <div class="dv-console-title">DrawVision Command Console</div>
+      <div class="dv-console-subtitle">Test the new CAD engine: room → kitchen → services → scene graph → viewport</div>
+    </div>
+    <button id="dvToggleConsole" class="dv-console-button secondary">Hide</button>
   </div>
-  <div id="dvJsonCommandStatus" style="margin-top:8px;font-size:13px;color:#cbd5e1;">Ready</div>
+
+  <textarea
+    id="dvJsonCommandInput"
+    class="dv-command-input"
+    rows="4"
+    placeholder='Paste JSON command here, for example: {"cmd":"room.detect",...}'
+  ></textarea>
+
+  <div class="dv-console-actions">
+    <button id="dvRunJsonCommand" class="dv-console-button primary">Run JSON Command</button>
+    <button id="dvFillRoomCommand" class="dv-console-button">Example Room</button>
+    <button id="dvFillKitchenCommand" class="dv-console-button">Example Kitchen</button>
+    <button id="dvFillBathroomCommand" class="dv-console-button">Example Bathroom</button>
+    <button id="dvClearJsonCommand" class="dv-console-button danger">Clear</button>
+  </div>
+
+  <div id="dvJsonCommandStatus" class="dv-console-status">Ready</div>
+</div>
 </div>
 
   <main class="app-shell">

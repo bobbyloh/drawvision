@@ -1477,9 +1477,15 @@ function setupJsonCommandPanel() {
   const run = document.getElementById('dvRunJsonCommand');
   const room = document.getElementById('dvFillRoomCommand');
   const kitchen = document.getElementById('dvFillKitchenCommand');
+  const bathroom = document.getElementById('dvFillBathroomCommand');
+  const clear = document.getElementById('dvClearJsonCommand');
+  const toggle = document.getElementById('dvToggleConsole');
+  const panel = document.getElementById('dvJsonCommandPanel');
   const status = document.getElementById('dvJsonCommandStatus');
 
   if (!input || !run) return;
+  if (run.dataset.bound === 'true') return;
+  run.dataset.bound = 'true';
 
   room?.addEventListener('click', () => {
     input.value = JSON.stringify({
@@ -1487,7 +1493,8 @@ function setupJsonCommandPanel() {
       name: 'Kitchen',
       room_type: 'kitchen',
       boundary: [[0,0,0],[5000,0,0],[5000,3000,0],[0,3000,0]]
-    });
+    }, null, 2);
+    status.textContent = 'Loaded room.detect example';
   });
 
   kitchen?.addEventListener('click', () => {
@@ -1496,7 +1503,34 @@ function setupJsonCommandPanel() {
       room_id: 'room_1',
       layout_type: 'linear',
       start: [100,100,0]
-    });
+    }, null, 2);
+    status.textContent = 'Loaded kitchen.generate example';
+  });
+
+  bathroom?.addEventListener('click', () => {
+    input.value = JSON.stringify({
+      cmd: 'bathroom.generate',
+      room_id: 'room_1',
+      start: [100,1200,0]
+    }, null, 2);
+    status.textContent = 'Loaded bathroom.generate example';
+  });
+
+  clear?.addEventListener('click', () => {
+    input.value = '';
+    status.textContent = 'Cleared';
+  });
+
+  toggle?.addEventListener('click', () => {
+    panel?.classList.toggle('dv-console-hidden');
+    toggle.textContent = panel?.classList.contains('dv-console-hidden') ? 'Show' : 'Hide';
+  });
+
+  input.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      run.click();
+    }
   });
 
   run.addEventListener('click', () => {
