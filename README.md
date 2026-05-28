@@ -1,2 +1,2 @@
 # drawvision
-mental CAD
+imagineCAD
